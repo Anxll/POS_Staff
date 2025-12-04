@@ -2,12 +2,30 @@ Imports System.Globalization
 
 Public Class NewReservationForm
     Private reservationRepository As New ReservationRepository()
+    
+    ' Store selected reservation items
+    Public Property SelectedItems As New List(Of ReservationItem)
 
     Private Sub NewReservationForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Set default date to today
         dtpDate.Value = DateTime.Now
         dtpTime.Value = DateTime.Now
         cmbEventType.SelectedIndex = 0 ' Default to first item
+    End Sub
+
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        ' Open ReservationSelectOrder form to select items
+        Dim selectOrderForm As New ReservationSelectOrder()
+        If selectOrderForm.ShowDialog() = DialogResult.OK Then
+            ' Get selected items from the order form
+            SelectedItems = selectOrderForm.GetSelectedItems()
+            
+            ' Update UI to show items were selected
+            If SelectedItems.Count > 0 Then
+                Button1.Text = $"Selected ({SelectedItems.Count} items)"
+                Button1.BackColor = Color.FromArgb(0, 200, 83) ' Green to indicate selected
+            End If
+        End If
     End Sub
 
     Private Sub btnClose_Click(sender As Object, e As EventArgs) Handles btnClose.Click
@@ -52,13 +70,14 @@ Public Class NewReservationForm
                 .NumberOfGuests = numberOfGuests,
                 .SpecialRequests = txtSpecialRequest.Text,
                 .ReservationStatus = "Pending",
-                .ContactNumber = txtPhone.Text
+                .ContactNumber = txtPhone.Text,
+                .Items = SelectedItems ' Attach selected items to reservation
             }
 
             If reservationRepository.CreateReservation(reservation) > 0 Then
                 MessageBox.Show("Reservation created successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
                 DialogResult = DialogResult.OK
-                Close
+                Close()
             Else
                 MessageBox.Show("Failed to create reservation.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End If

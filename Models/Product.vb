@@ -12,4 +12,5 @@ Public Class Product
     Public Property OrderCount As Integer ' NEW: Times ordered counter
     Public Property Image As String ' NEW: Image file path (changed from Byte())
     Public Property PrepTime As Integer ' NEW: Preparation time in minutes
+    Public Property HasSufficientInventory As Boolean = True ' NEW: Computed based on inventory
 End Class

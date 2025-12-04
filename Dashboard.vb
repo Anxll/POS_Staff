@@ -66,4 +66,40 @@ Public Class Dashboard
     Private Sub lblBrand_Click(sender As Object, e As EventArgs) Handles lblBrand.Click
 
     End Sub
+
+    Private Sub btnLogout_Click(sender As Object, e As EventArgs) Handles btnLogout.Click
+        ' Confirm logout
+        Dim result = MessageBox.Show(
+            "Are you sure you want to logout?" & vbCrLf & vbCrLf &
+            "Your time-out will be recorded.",
+            "Confirm Logout",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question
+        )
+
+        If result = DialogResult.Yes Then
+            Try
+                ' Record time-out if there's an active session
+                If CurrentSession.IsLoggedIn AndAlso CurrentSession.AttendanceID > 0 Then
+                    Dim attendanceRepo As New AttendanceRepository()
+                    attendanceRepo.RecordTimeOut(CurrentSession.EmployeeID, CurrentSession.AttendanceID)
+                End If
+
+                ' Clear session
+                CurrentSession.Clear()
+
+                ' Show login form
+                Dim loginForm As New LogIn()
+                loginForm.Show()
+                Me.Close()
+            Catch ex As Exception
+                MessageBox.Show(
+                    $"Error during logout: {ex.Message}",
+                    "Logout Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                )
+            End Try
+        End If
+    End Sub
 End Class

@@ -1,5 +1,6 @@
 Imports MySql.Data.MySqlClient
 Imports System.Collections.Generic
+Imports System.Threading.Tasks
 
 Public Class ReservationRepository
     Public Function GetTodayReservations() As List(Of Reservation)
@@ -21,6 +22,13 @@ Public Class ReservationRepository
                               "ORDER BY r.EventDate DESC, r.EventTime DESC LIMIT 50"
         
         Return GetReservations(query)
+    End Function
+
+    ''' <summary>
+    ''' Async version of GetAllReservations
+    ''' </summary>
+    Public Async Function GetAllReservationsAsync() As Task(Of List(Of Reservation))
+        Return Await Task.Run(Function() GetAllReservations())
     End Function
 
     Private Function GetReservations(query As String) As List(Of Reservation)

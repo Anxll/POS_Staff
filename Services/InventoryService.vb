@@ -1,5 +1,6 @@
 Imports MySql.Data.MySqlClient
 Imports System.Collections.Generic
+Imports System.Linq
 
 Public Class InventoryService
     
@@ -221,5 +222,69 @@ Public Class InventoryService
         
         Return 0
     End Function
+
+    ''' <summary>
+    ''' Efficiently checks inventory for a list of products and updates their HasSufficientInventory property.
+    ''' Uses bulk queries to avoid N+1 problem.
+    ''' </summary>
+    Public Sub CheckInventoryForProducts(products As List(Of Product))
+        Try
+            ' 1. Fetch total stock for all ingredients
+            Dim stockQuery As String = "SELECT IngredientID, SUM(StockQuantity) as TotalStock FROM inventory_batches WHERE BatchStatus = 'Active' GROUP BY IngredientID"
+            Dim stockTable As DataTable = Database.ExecuteQuery(stockQuery)
+            Dim stockMap As New Dictionary(Of Integer, Decimal)
+            
+            If stockTable IsNot Nothing Then
+                For Each row As DataRow In stockTable.Rows
+                    stockMap(Convert.ToInt32(row("IngredientID"))) = Convert.ToDecimal(row("TotalStock"))
+                Next
+            End If
+            
+            ' 2. Fetch all product ingredients
+            Dim ingQuery As String = "SELECT ProductID, IngredientID, QuantityUsed FROM product_ingredients"
+            Dim ingTable As DataTable = Database.ExecuteQuery(ingQuery)
+            Dim productIngredients As New Dictionary(Of Integer, List(Of ProductIngredient))
+            
+            If ingTable IsNot Nothing Then
+                For Each row As DataRow In ingTable.Rows
+                    Dim pid As Integer = Convert.ToInt32(row("ProductID"))
+                    If Not productIngredients.ContainsKey(pid) Then
+                        productIngredients(pid) = New List(Of ProductIngredient)
+                    End If
+                    
+                    productIngredients(pid).Add(New ProductIngredient With {
+                        .IngredientID = Convert.ToInt32(row("IngredientID")),
+                        .QuantityUsed = Convert.ToDecimal(row("QuantityUsed"))
+                    })
+                Next
+            End If
+            
+            ' 3. Check each product
+            For Each product In products
+                ' Default to true
+                product.HasSufficientInventory = True
+                
+                ' If product has ingredients, check them
+                If productIngredients.ContainsKey(product.ProductID) Then
+                    For Each req In productIngredients(product.ProductID)
+                        Dim available As Decimal = 0
+                        If stockMap.ContainsKey(req.IngredientID) Then
+                            available = stockMap(req.IngredientID)
+                        End If
+                        
+                        ' If any ingredient is insufficient, mark product as unavailable
+                        If available < req.QuantityUsed Then
+                            product.HasSufficientInventory = False
+                            Exit For
+                        End If
+                    Next
+                End If
+            Next
+            
+        Catch ex As Exception
+            System.Diagnostics.Debug.WriteLine($"Error checking inventory: {ex.Message}")
+            ' On error, assume available to avoid blocking sales unnecessarily
+        End Try
+    End Sub
 
 End Class

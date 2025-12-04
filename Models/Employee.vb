@@ -15,4 +15,13 @@ Public Class Employee
     Public Property EmergencyContact As String
     Public Property WorkShift As String ' Morning, Evening, Split
     Public Property Salary As Decimal?
+
+    ''' <summary>
+    ''' Computed property for full name
+    ''' </summary>
+    Public ReadOnly Property FullName As String
+        Get
+            Return $"{FirstName} {LastName}".Trim()
+        End Get
+    End Property
 End Class

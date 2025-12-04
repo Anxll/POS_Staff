@@ -28,13 +28,11 @@ Partial Class LogIn
         lblHeaderTitle = New Label()
         Panel2 = New Panel()
         Panel3 = New Panel()
-        Label5 = New Label()
-        Label4 = New Label()
-        btnLogin = New Button()
+        btnLoginTimein = New Button()
         Label3 = New Label()
         Label2 = New Label()
         Panel5 = New Panel()
-        txtPassword = New TextBox()
+        EmployeeID = New TextBox()
         Panel4 = New Panel()
         txtEmail = New TextBox()
         lblSubHeader = New Label()
@@ -56,12 +54,13 @@ Partial Class LogIn
         TableLayoutPanel1.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100F))
         TableLayoutPanel1.Controls.Add(pnlHeader, 0, 0)
         TableLayoutPanel1.Controls.Add(Panel2, 0, 1)
+        TableLayoutPanel1.Dock = DockStyle.Fill
         TableLayoutPanel1.Location = New Point(0, 0)
+        TableLayoutPanel1.Margin = New Padding(0)
         TableLayoutPanel1.Name = "TableLayoutPanel1"
         TableLayoutPanel1.RowCount = 2
-        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Percent, 12.3711338F))
-        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Percent, 87.62887F))
-        TableLayoutPanel1.Size = New Size(1507, 718)
+        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Absolute, 88F))
+        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Percent, 100F))
         TableLayoutPanel1.TabIndex = 0
         ' 
         ' pnlHeader
@@ -79,10 +78,10 @@ Partial Class LogIn
         ' 
         ' logo
         ' 
-        logo.Anchor = AnchorStyles.Left
+        logo.Anchor = AnchorStyles.None
         logo.BackColor = Color.Transparent
         logo.Image = My.Resources.Resources._291136637_456626923131971_8250989517364923746_n_removebg_preview1
-        logo.Location = New Point(642, 15)
+        logo.Location = New Point(50, 15)
         logo.Margin = New Padding(0, 9, 0, 0)
         logo.Name = "logo"
         logo.Size = New Size(67, 59)
@@ -92,10 +91,11 @@ Partial Class LogIn
         ' 
         ' lblHeaderTitle
         ' 
+        lblHeaderTitle.Anchor = AnchorStyles.None
         lblHeaderTitle.AutoSize = True
         lblHeaderTitle.Font = New Font("Segoe UI Semibold", 14F, FontStyle.Bold)
         lblHeaderTitle.ForeColor = SystemColors.Window
-        lblHeaderTitle.Location = New Point(717, 30)
+        lblHeaderTitle.Location = New Point(125, 30)
         lblHeaderTitle.Name = "lblHeaderTitle"
         lblHeaderTitle.Size = New Size(147, 32)
         lblHeaderTitle.TabIndex = 0
@@ -105,62 +105,38 @@ Partial Class LogIn
         ' 
         Panel2.BackColor = Color.FromArgb(CByte(255), CByte(246), CByte(245))
         Panel2.Controls.Add(Panel3)
-        Panel2.Location = New Point(3, 91)
+        Panel2.Dock = DockStyle.Fill
+        Panel2.Location = New Point(0, 88)
+        Panel2.Margin = New Padding(0)
         Panel2.Name = "Panel2"
-        Panel2.Size = New Size(1501, 624)
         Panel2.TabIndex = 2
         ' 
         ' Panel3
         ' 
+        Panel3.Anchor = AnchorStyles.None
         Panel3.BorderStyle = BorderStyle.FixedSingle
-        Panel3.Controls.Add(Label5)
-        Panel3.Controls.Add(Label4)
-        Panel3.Controls.Add(btnLogin)
+        Panel3.Controls.Add(btnLoginTimein)
         Panel3.Controls.Add(Label3)
         Panel3.Controls.Add(Label2)
         Panel3.Controls.Add(Panel5)
         Panel3.Controls.Add(Panel4)
         Panel3.Controls.Add(lblSubHeader)
         Panel3.Controls.Add(Label1)
-        Panel3.Location = New Point(517, 139)
+        Panel3.Location = New Point(500, 80)
         Panel3.Name = "Panel3"
         Panel3.Size = New Size(501, 476)
         Panel3.TabIndex = 0
         ' 
-        ' Label5
+        ' btnLoginTimein
         ' 
-        Label5.AutoSize = True
-        Label5.Font = New Font("Segoe UI Semibold", 10.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
-        Label5.ForeColor = Color.FromArgb(CByte(255), CByte(127), CByte(39))
-        Label5.Location = New Point(301, 438)
-        Label5.Margin = New Padding(0)
-        Label5.Name = "Label5"
-        Label5.Size = New Size(128, 23)
-        Label5.TabIndex = 9
-        Label5.Text = "Create Account"
-        ' 
-        ' Label4
-        ' 
-        Label4.AutoSize = True
-        Label4.Font = New Font("Segoe UI", 10F)
-        Label4.ForeColor = Color.FromArgb(CByte(85), CByte(85), CByte(85))
-        Label4.Location = New Point(113, 438)
-        Label4.Margin = New Padding(0)
-        Label4.Name = "Label4"
-        Label4.Size = New Size(191, 23)
-        Label4.TabIndex = 8
-        Label4.Text = "Don't have an account?"
-        ' 
-        ' btnLogin
-        ' 
-        btnLogin.BackColor = Color.FromArgb(CByte(255), CByte(127), CByte(39))
-        btnLogin.FlatStyle = FlatStyle.Popup
-        btnLogin.Location = New Point(167, 379)
-        btnLogin.Name = "btnLogin"
-        btnLogin.Size = New Size(176, 50)
-        btnLogin.TabIndex = 7
-        btnLogin.Text = "Continue"
-        btnLogin.UseVisualStyleBackColor = False
+        btnLoginTimein.BackColor = Color.FromArgb(CByte(255), CByte(127), CByte(39))
+        btnLoginTimein.FlatStyle = FlatStyle.Popup
+        btnLoginTimein.Location = New Point(167, 379)
+        btnLoginTimein.Name = "btnLoginTimein"
+        btnLoginTimein.Size = New Size(176, 50)
+        btnLoginTimein.TabIndex = 7
+        btnLoginTimein.Text = "Login/Time-In"
+        btnLoginTimein.UseVisualStyleBackColor = False
         ' 
         ' Label3
         ' 
@@ -168,9 +144,9 @@ Partial Class LogIn
         Label3.Font = New Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label3.Location = New Point(27, 260)
         Label3.Name = "Label3"
-        Label3.Size = New Size(80, 23)
+        Label3.Size = New Size(106, 23)
         Label3.TabIndex = 6
-        Label3.Text = "Password"
+        Label3.Text = "Employee ID"
         ' 
         ' Label2
         ' 
@@ -186,21 +162,21 @@ Partial Class LogIn
         ' 
         Panel5.BackColor = SystemColors.Window
         Panel5.BorderStyle = BorderStyle.FixedSingle
-        Panel5.Controls.Add(txtPassword)
+        Panel5.Controls.Add(EmployeeID)
         Panel5.Location = New Point(37, 295)
         Panel5.Name = "Panel5"
         Panel5.Size = New Size(410, 50)
         Panel5.TabIndex = 5
         ' 
-        ' txtPassword
+        ' EmployeeID
         ' 
-        txtPassword.BorderStyle = BorderStyle.None
-        txtPassword.Font = New Font("Segoe UI", 12F)
-        txtPassword.Location = New Point(15, 11)
-        txtPassword.Name = "txtPassword"
-        txtPassword.Size = New Size(378, 27)
-        txtPassword.TabIndex = 4
-        txtPassword.UseSystemPasswordChar = True
+        EmployeeID.BorderStyle = BorderStyle.None
+        EmployeeID.Font = New Font("Segoe UI", 12F)
+        EmployeeID.Location = New Point(15, 11)
+        EmployeeID.Name = "EmployeeID"
+        EmployeeID.Size = New Size(378, 27)
+        EmployeeID.TabIndex = 4
+        EmployeeID.UseSystemPasswordChar = True
         ' 
         ' Panel4
         ' 
@@ -257,10 +233,13 @@ Partial Class LogIn
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
-        ClientSize = New Size(1507, 718)
+        ClientSize = New Size(1280, 720)
         Controls.Add(Panel1)
+        MinimumSize = New Size(800, 600)
         Name = "LogIn"
-        Text = "LogIn"
+        StartPosition = FormStartPosition.CenterScreen
+        Text = "Tabeya Staff Login"
+        WindowState = FormWindowState.Maximized
         TableLayoutPanel1.ResumeLayout(False)
         pnlHeader.ResumeLayout(False)
         pnlHeader.PerformLayout()
@@ -290,8 +269,6 @@ Partial Class LogIn
     Friend WithEvents Label3 As Label
     Friend WithEvents Label2 As Label
     Friend WithEvents Panel5 As Panel
-    Friend WithEvents txtPassword As TextBox
-    Friend WithEvents btnLogin As Button
-    Friend WithEvents Label5 As Label
-    Friend WithEvents Label4 As Label
+    Friend WithEvents EmployeeID As TextBox
+    Friend WithEvents btnLoginTimein As Button
 End Class

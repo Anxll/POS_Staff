@@ -29,6 +29,7 @@ Partial Class Dashboard
         btnPlaceOrder = New Button()
         btnReservations = New Button()
         btnReports = New Button()
+        btnLogout = New Button()
         tlpRight = New TableLayoutPanel()
         pnlHeader = New Panel()
         lblHeaderTitle = New Label()
@@ -147,6 +148,7 @@ Partial Class Dashboard
         flpNav.Controls.Add(btnPlaceOrder)
         flpNav.Controls.Add(btnReservations)
         flpNav.Controls.Add(btnReports)
+        flpNav.Controls.Add(btnLogout)
         flpNav.Dock = DockStyle.Fill
         flpNav.FlowDirection = FlowDirection.TopDown
         flpNav.Location = New Point(0, 96)
@@ -241,6 +243,26 @@ Partial Class Dashboard
         btnReports.TextImageRelation = TextImageRelation.ImageBeforeText
         btnReports.UseVisualStyleBackColor = False
         ' 
+        ' btnLogout
+        ' 
+        btnLogout.BackColor = Color.FromArgb(CByte(200), CByte(50), CByte(50))
+        btnLogout.Cursor = Cursors.Hand
+        btnLogout.FlatAppearance.BorderSize = 0
+        btnLogout.FlatStyle = FlatStyle.Flat
+        btnLogout.Font = New Font("Segoe UI", 10F, FontStyle.Bold)
+        btnLogout.ForeColor = Color.White
+        btnLogout.ImageAlign = ContentAlignment.MiddleLeft
+        btnLogout.Location = New Point(0, 232)
+        btnLogout.Margin = New Padding(0, 0, 0, 8)
+        btnLogout.Name = "btnLogout"
+        btnLogout.Padding = New Padding(12, 10, 12, 10)
+        btnLogout.Size = New Size(188, 48)
+        btnLogout.TabIndex = 5
+        btnLogout.Text = "Logout"
+        btnLogout.TextAlign = ContentAlignment.MiddleLeft
+        btnLogout.TextImageRelation = TextImageRelation.ImageBeforeText
+        btnLogout.UseVisualStyleBackColor = False
+        ' 
         ' tlpRight
         ' 
         tlpRight.ColumnCount = 1
@@ -334,4 +356,5 @@ Partial Class Dashboard
     Friend WithEvents lblHeaderTitle As Label
     Friend WithEvents pnlContent As Panel
     Friend WithEvents btnReservations As Button
+    Friend WithEvents btnLogout As Button
 End Class

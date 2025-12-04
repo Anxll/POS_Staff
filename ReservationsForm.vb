@@ -1,21 +1,44 @@
 Imports System.Collections.Generic
+Imports System.Reflection
+Imports System.Threading.Tasks
 
 Public Class ReservationsForm
     Private reservationRepository As New ReservationRepository()
+    Private isLoading As Boolean = False
 
-    Private Sub ReservationsForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    Private Async Sub ReservationsForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Enable double buffering for smoother scrolling
+        GetType(Control).GetProperty("DoubleBuffered", BindingFlags.NonPublic Or BindingFlags.Instance).SetValue(Panel1, True, Nothing)
+
         ' Hide the template
         ResTemplate.Visible = False
-        LoadReservations()
+        
+        ' Load asynchronously
+        Await LoadReservationsAsync()
     End Sub
 
-    Private Sub LoadReservations()
+    Private Async Function LoadReservationsAsync() As Task
+        If isLoading Then Return
+        isLoading = True
+
         Try
-            Dim reservations As List(Of Reservation) = reservationRepository.GetAllReservations()
+            ' Show loading state (optional: add a label or spinner)
+            
+            ' Fetch data in background
+            Dim reservations As List(Of Reservation) = Await reservationRepository.GetAllReservationsAsync()
+            
+            ' Update UI
             DisplayReservations(reservations)
         Catch ex As Exception
             MessageBox.Show($"Error loading reservations: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Finally
+            isLoading = False
         End Try
+    End Function
+
+    Private Async Sub LoadReservations()
+        ' Legacy method kept for compatibility if needed, but redirects to async
+        Await LoadReservationsAsync()
     End Sub
 
     Private Sub DisplayReservations(reservations As List(Of Reservation))
@@ -186,15 +209,15 @@ Public Class ReservationsForm
         }
     End Function
 
-    Private Sub btnNewReservation_Click(sender As Object, e As EventArgs) Handles btnNewReservation.Click
+    Private Async Sub btnNewReservation_Click(sender As Object, e As EventArgs) Handles btnNewReservation.Click
         Dim newResForm As New NewReservationForm()
         If newResForm.ShowDialog() = DialogResult.OK Then
-            LoadReservations()
+            Await LoadReservationsAsync()
         End If
     End Sub
 
-    Private Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
-        LoadReservations()
+    Private Async Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
+        Await LoadReservationsAsync()
     End Sub
 
     Private Sub lblTime2_Click(sender As Object, e As EventArgs) Handles lblTime2.Click

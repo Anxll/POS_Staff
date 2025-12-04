@@ -3,7 +3,7 @@ Imports System.Collections.Generic
 Imports System.Linq
 Imports System.Reflection
 
-Public Class PlaceOrderForm
+Public Class ReservationSelectOrder
     Private productRepository As New ProductRepository()
     Private orderRepository As New OrderRepository()
 
@@ -15,14 +15,20 @@ Public Class PlaceOrderForm
     ''' <summary>
     ''' Loads products from database when form loads
     ''' </summary>
-    Private Async Sub PlaceOrderForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    Private Async Sub ReservationSelectOrder_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Set form properties for dialog behavior
+        Me.FormBorderStyle = FormBorderStyle.FixedSingle
+        Me.MaximizeBox = False
+        Me.MinimizeBox = False
+        Me.StartPosition = FormStartPosition.CenterParent
+        
         ' Enable double buffering for smoother scrolling
         GetType(Control).GetProperty("DoubleBuffered", BindingFlags.NonPublic Or BindingFlags.Instance).SetValue(TableLayoutPanel3, True, Nothing)
-
+        
         ' Initialize order items list
         orderItems = New List(Of OrderItem)
 
-        ' Load all products asynchronously
+        ' Load products asynchronously
         Await LoadProductsAsync("All")
 
         ' Set default total to 0
@@ -40,7 +46,7 @@ Public Class PlaceOrderForm
             ' Show loading indicator
             ShowLoadingIndicator(True)
 
-' Load products in background thread
+            ' Load products in background thread
             Dim products As List(Of Product) = Await productRepository.GetProductsByCategoryAsync(category)
 
             ' Update UI on UI thread
@@ -151,8 +157,7 @@ Public Class PlaceOrderForm
             LoadImageAsync(pb, product.Image)
         End If
 
-        ' Handle click events
-        AddHandler pb.Click, Sub(sender, e) HandleProductClick(product)
+        AddHandler pb.Click, Sub(sender, e) AddProductToOrder(product)
 
         ' Name
         Dim lblName As New Label With {
@@ -181,44 +186,15 @@ Public Class PlaceOrderForm
             .AutoSize = True
         }
 
-        ' Check inventory status
-        If Not product.HasSufficientInventory Then
-            panel.BackColor = Color.FromArgb(240, 240, 240) ' Light gray
-            lblPrice.ForeColor = Color.Gray
-
-            ' Add Out of Stock label
-            Dim lblStock As New Label With {
-                .Text = "OUT OF STOCK",
-                .ForeColor = Color.Red,
-                .Font = New Font("Segoe UI", 9, FontStyle.Bold),
-                .Location = New Point(10, 160),
-                .AutoSize = True,
-                .BackColor = Color.Transparent
-            }
-            panel.Controls.Add(lblStock)
-
-            ' Disable cursor hand
-            pb.Cursor = Cursors.Default
-        End If
-
         panel.Controls.AddRange({pb, lblName, lblPrice, lblCat})
 
         ' Make entire panel clickable
-        AddHandler panel.Click, Sub(sender, e) HandleProductClick(product)
-        AddHandler lblName.Click, Sub(sender, e) HandleProductClick(product)
-        AddHandler lblPrice.Click, Sub(sender, e) HandleProductClick(product)
+        AddHandler panel.Click, Sub(sender, e) AddProductToOrder(product)
+        AddHandler lblName.Click, Sub(sender, e) AddProductToOrder(product)
+        AddHandler lblPrice.Click, Sub(sender, e) AddProductToOrder(product)
 
         Return panel
     End Function
-
-    Private Sub HandleProductClick(product As Product)
-        If Not product.HasSufficientInventory Then
-            MessageBox.Show("This product cannot be ordered due to insufficient inventory." & vbCrLf & "See @Inventory_alerts.sql for details.", "Out of Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-            Return
-        End If
-
-        AddProductToOrder(product)
-    End Sub
 
     ''' <summary>
     ''' Loads image in background thread to avoid UI freeze
@@ -356,7 +332,7 @@ Public Class PlaceOrderForm
 
             ' Logic
             Dim currentItem = item
-
+            
             ' Handle manual text change
             AddHandler txtQty.TextChanged, Sub(sender, e)
                                                Dim newQty As Integer
@@ -483,139 +459,33 @@ Public Class PlaceOrderForm
 
     Private Sub btnCheckout_Click(sender As Object, e As EventArgs) Handles btnCheckout.Click
         If orderItems.Count = 0 Then
-            MessageBox.Show("Please add items to the order before checkout.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            MessageBox.Show("Please add items to the reservation order.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Return
         End If
 
-        If String.IsNullOrEmpty(currentOrderType) Then
-            MessageBox.Show("Please select order type (Dine-In or Takeout).", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-            Return
-        End If
-
-        Try
-            ' Validate inventory before creating order
-            Dim inventoryService As New InventoryService()
-            Dim validationResult = inventoryService.ValidateInventoryForOrder(orderItems)
-
-            ' If items need to be removed due to insufficient inventory
-            If Not validationResult.IsValid AndAlso validationResult.ItemsToRemove.Count > 0 Then
-                ' Show warning to user
-                MessageBox.Show(
-                    validationResult.WarningMessage & vbCrLf & vbCrLf & "These items will be removed from your order.",
-                    "Inventory Alert",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning
-                )
-
-                ' Remove items with insufficient inventory
-                Dim itemsToRemove As List(Of String) = validationResult.ItemsToRemove
-                For i As Integer = 0 To itemsToRemove.Count - 1
-                    Dim productName As String = itemsToRemove(i)
-                    orderItems.RemoveAll(Function(item) item.ProductName = productName)
-                Next
-
-                ' Refresh display
-                UpdateOrderDisplay()
-
-                ' Stop checkout - let user review and try again
-                Return
-            End If
-
-            ' Recalculate totals with remaining items
-            Dim totalAmount As Decimal = orderItems.Sum(Function(i) i.UnitPrice * i.Quantity)
-            Dim itemsCount As Integer = orderItems.Sum(Function(i) i.Quantity)
-
-            ' Show payment dialog
-            Dim paymentDialog As New PaymentDialog(totalAmount)
-            If paymentDialog.ShowDialog() <> DialogResult.OK Then
-                ' User canceled payment
-                Return
-            End If
-
-            ' Get payment details
-            Dim paymentMethod As String = paymentDialog.PaymentMethod
-            Dim amountGiven As Decimal = paymentDialog.AmountGiven
-            Dim changeAmount As Decimal = paymentDialog.ChangeAmount
-
-            Dim newOrder As New Order With {
-                .OrderType = currentOrderType,
-                .OrderSource = "POS",
-                .OrderDate = DateTime.Now.Date,
-                .OrderTime = DateTime.Now.TimeOfDay,
-                .ItemsOrderedCount = itemsCount,
-                .TotalAmount = totalAmount,
-                .OrderStatus = "Preparing",
-                .PreparationTimeEstimate = If(orderItems.Any(), CInt(orderItems.Sum(Function(i) i.PrepTime * (1 + (i.Quantity - 1) * 0.2))), 0)
-            }
-
-            Dim orderID As Integer = orderRepository.CreateOrder(newOrder, orderItems)
-
-            If orderID > 0 Then
-                Try
-                    ' Generate order number in format VT-YYYY-NNNNNN
-                    Dim orderNumber As String = $"VT-{DateTime.Now:yyyy}-{orderID:D6}"
-
-                    ' Insert receipt data into database
-                    Dim receiptRepo As New ReceiptRepository()
-                    Dim receiptID As Integer = receiptRepo.InsertReceiptHeader(
-                        orderID, orderNumber, totalAmount, paymentMethod, amountGiven, changeAmount
-                    )
-
-                    ' Insert receipt items with batch information
-                    receiptRepo.InsertReceiptItems(receiptID, orderID, orderItems)
-
-                    ' Generate PDF receipt
-                    Dim pdfGenerator As New ReceiptPDFGenerator()
-                    Dim pdfPath As String = pdfGenerator.GenerateReceipt(receiptID)
-
-                    ' Show success message
-                    MessageBox.Show(
-                        $"Order #{orderID} has been placed successfully!" & vbCrLf & vbCrLf &
-                        $"Receipt saved to: {pdfPath}",
-                        "Success",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information
-                    )
-
-                    ' Automatically open PDF
-                    Try
-                        Process.Start(pdfPath)
-                    Catch ex As Exception
-                        ' If PDF can't be opened automatically, just continue
-                        MessageBox.Show(
-                            "Receipt PDF was created but could not be opened automatically." & vbCrLf &
-                            $"You can find it at: {pdfPath}",
-                            "Information",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information
-                        )
-                    End Try
-
-                    ' Reset order
-                    ResetOrder()
-
-                Catch pdfEx As Exception
-                    ' If PDF generation fails, still show success message but log error
-                    MessageBox.Show(
-                        $"Order #{orderID} has been placed successfully!" & vbCrLf & vbCrLf &
-                        $"However, there was an error generating the PDF receipt:" & vbCrLf &
-                        pdfEx.Message & vbCrLf & vbCrLf &
-                        "The receipt data has been saved to the database.",
-                        "Partial Success",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning
-                    )
-
-                    ' Reset order even if PDF fails
-                    ResetOrder()
-                End Try
-            Else
-                MessageBox.Show("Failed to create order. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            End If
-        Catch ex As Exception
-            MessageBox.Show($"Error processing order: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
+        ' For reservations, we just collect the items and close the dialog
+        Me.DialogResult = DialogResult.OK
+        Me.Close()
     End Sub
+
+    ''' <summary>
+    ''' Returns the selected items as ReservationItems for the reservation
+    ''' </summary>
+    Public Function GetSelectedItems() As List(Of ReservationItem)
+        Dim reservationItems As New List(Of ReservationItem)
+        
+        For Each orderItem In orderItems
+            Dim resItem As New ReservationItem With {
+                .ProductName = orderItem.ProductName,
+                .Quantity = orderItem.Quantity,
+                .UnitPrice = orderItem.UnitPrice,
+                .TotalPrice = orderItem.Quantity * orderItem.UnitPrice
+            }
+            reservationItems.Add(resItem)
+        Next
+        
+        Return reservationItems
+    End Function
 
     Private Sub btnCancelOrder_Click(sender As Object, e As EventArgs) Handles btnCancelOrder.Click
         If MessageBox.Show("Are you sure you want to cancel this order?", "Confirm Cancel", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
