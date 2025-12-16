@@ -11,7 +11,7 @@ Public Class ReservationRepository
                               "FROM reservations r " &
                               "LEFT JOIN customers c ON r.CustomerID = c.CustomerID " &
                               "ORDER BY r.ReservationID DESC"
-        
+
         Return GetReservations(query)
     End Function
 
@@ -19,12 +19,12 @@ Public Class ReservationRepository
     ''' Gets today's reservations (Buffered - Load All)
     ''' </summary>
     Public Function GetTodayReservations() As List(Of Reservation)
-         Dim query As String = "SELECT r.ReservationID, r.CustomerID, CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName, " &
-                                "c.Email, r.ContactNumber, r.NumberOfGuests, r.EventDate, r.EventTime, r.EventType, " &
-                                "r.ReservationStatus " &
-                                "FROM reservations r LEFT JOIN customers c ON r.CustomerID = c.CustomerID " &
-                                "WHERE DATE(r.EventDate) = CURDATE() AND r.ReservationStatus IN ('Accepted', 'Confirmed') " &
-                                "ORDER BY r.EventDate ASC, r.EventTime ASC"
+        Dim query As String = "SELECT r.ReservationID, r.CustomerID, CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName, " &
+                               "c.Email, r.ContactNumber, r.NumberOfGuests, r.EventDate, r.EventTime, r.EventType, " &
+                               "r.ReservationStatus " &
+                               "FROM reservations r LEFT JOIN customers c ON r.CustomerID = c.CustomerID " &
+                               "WHERE DATE(r.EventDate) = CURDATE() AND r.ReservationStatus IN ('Accepted', 'Confirmed') " &
+                               "ORDER BY r.EventDate ASC, r.EventTime ASC"
         Return GetReservations(query)
     End Function
 
@@ -61,7 +61,7 @@ Public Class ReservationRepository
     Private Function GetReservations(query As String) As List(Of Reservation)
         Dim reservations As New List(Of Reservation)
         Dim table As DataTable = modDB.ExecuteQuery(query)
-        
+
         If table IsNot Nothing Then
             For Each row As DataRow In table.Rows
                 Dim res As New Reservation()
@@ -70,7 +70,7 @@ Public Class ReservationRepository
                 res.EventTime = CType(row("EventTime"), TimeSpan)
                 res.NumberOfGuests = Convert.ToInt32(row("NumberOfGuests"))
                 res.ReservationStatus = row("ReservationStatus").ToString()
-                
+
                 ' Optional fields depending on query
                 If table.Columns.Contains("CustomerID") Then res.CustomerID = Convert.ToInt32(row("CustomerID"))
                 If table.Columns.Contains("FullName") Then res.FullName = If(IsDBNull(row("FullName")), "", row("FullName").ToString())
@@ -85,14 +85,17 @@ Public Class ReservationRepository
                 If table.Columns.Contains("DeliveryOption") Then res.DeliveryOption = If(IsDBNull(row("DeliveryOption")), "", row("DeliveryOption").ToString())
                 If table.Columns.Contains("TotalPrice") Then res.TotalPrice = Convert.ToDecimal(row("TotalPrice"))
                 If table.Columns.Contains("PrepTime") Then res.PrepTime = Convert.ToInt32(row("PrepTime"))
-                
+
                 reservations.Add(res)
             Next
         End If
-        
+
         Return reservations
     End Function
 
+    ''' <summary>
+    ''' Creates a new reservation and deducts inventory if status is Confirmed/Accepted
+    ''' </summary>
     Public Function CreateReservation(reservation As Reservation) As Integer
         If String.IsNullOrEmpty(reservation.ProductSelection) AndAlso reservation.Items IsNot Nothing AndAlso reservation.Items.Count > 0 Then
             Dim parts As New List(Of String)
@@ -103,7 +106,7 @@ Public Class ReservationRepository
         End If
 
         Dim query As String = "INSERT INTO reservations (CustomerID, FullName, AssignedStaffID, ReservationType, EventType, EventDate, EventTime, NumberOfGuests, ProductSelection, SpecialRequests, ReservationStatus, DeliveryAddress, DeliveryOption, ContactNumber) VALUES (@customerID, @fullName, @assignedStaffID, @reservationType, @eventType, @eventDate, @eventTime, @numberOfGuests, @productSelection, @specialRequests, @reservationStatus, @deliveryAddress, @deliveryOption, @contactNumber)"
-        
+
         Dim parameters As MySqlParameter() = {
             New MySqlParameter("@customerID", reservation.CustomerID),
             New MySqlParameter("@fullName", If(String.IsNullOrEmpty(reservation.FullName), DBNull.Value, reservation.FullName)),
@@ -125,24 +128,29 @@ Public Class ReservationRepository
             Dim newID As Object = modDB.ExecuteScalar("SELECT LAST_INSERT_ID()")
             If newID IsNot Nothing AndAlso IsNumeric(newID) Then
                 Dim reservationID As Integer = CInt(newID)
-                
-                For Each item In reservation.Items
-                    AddReservationItem(reservationID, item)
-                Next
-                
+
+                ' Add reservation items
+                If reservation.Items IsNot Nothing Then
+                    For Each item In reservation.Items
+                        AddReservationItem(reservationID, item)
+                    Next
+                End If
+
+                ' **Deduct inventory ONLY if status is Confirmed or Accepted**
                 If reservation.ReservationStatus = "Confirmed" OrElse reservation.ReservationStatus = "Accepted" Then
                     Try
-                        Dim inventoryService As New InventoryService()
-                        inventoryService.DeductInventoryForReservation(reservationID)
+                        DeductInventoryForReservation(reservationID)
+                        System.Diagnostics.Debug.WriteLine($"Successfully deducted inventory for new Reservation #{reservationID}")
                     Catch ex As Exception
-                        System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for reservation #{reservationID}: {ex.Message}")
+                        System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for new Reservation #{reservationID}: {ex.Message}")
+                        ' Don't fail the reservation creation, just log the error
                     End Try
                 End If
-                
+
                 Return reservationID
             End If
         End If
-        
+
         Return 0
     End Function
 
@@ -158,27 +166,87 @@ Public Class ReservationRepository
         modDB.ExecuteNonQuery(query, parameters)
     End Sub
 
+    ''' <summary>
+    ''' Updates reservation status and deducts inventory if changing TO Confirmed/Accepted
+    ''' </summary>
     Public Function UpdateReservationStatus(reservationID As Integer, status As String) As Boolean
-        Dim query As String = "UPDATE reservations SET ReservationStatus = @status WHERE ReservationID = @reservationID"
+        ' Get current status before updating
+        Dim currentStatus As String = GetReservationStatus(reservationID)
+
+        ' Update the status
+        Dim query As String = "UPDATE reservations SET ReservationStatus = @status, UpdatedDate = NOW() WHERE ReservationID = @reservationID"
         Dim parameters As MySqlParameter() = {
             New MySqlParameter("@status", status),
             New MySqlParameter("@reservationID", reservationID)
         }
-        
+
         Dim success As Boolean = modDB.ExecuteNonQuery(query, parameters) > 0
-        
-        If success AndAlso (status = "Confirmed" OrElse status = "Accepted") Then
-            Try
-                Dim inventoryService As New InventoryService()
-                inventoryService.DeductInventoryForReservation(reservationID)
-            Catch ex As Exception
-                System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for reservation #{reservationID}: {ex.Message}")
-            End Try
+
+        ' **Deduct inventory ONLY if status changed FROM Pending TO Confirmed/Accepted**
+        If success AndAlso currentStatus <> "Confirmed" AndAlso currentStatus <> "Accepted" Then
+            If status = "Confirmed" OrElse status = "Accepted" Then
+                Try
+                    DeductInventoryForReservation(reservationID)
+                    System.Diagnostics.Debug.WriteLine($"Successfully deducted inventory for Reservation #{reservationID} (status changed to {status})")
+                Catch ex As Exception
+                    System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for Reservation #{reservationID}: {ex.Message}")
+                    ' Don't fail the status update, just log the error
+                    Throw New Exception($"Status updated but inventory deduction failed: {ex.Message}", ex)
+                End Try
+            End If
         End If
-        
+
         Return success
     End Function
-    
+
+    ''' <summary>
+    ''' Gets the current status of a reservation
+    ''' </summary>
+    Private Function GetReservationStatus(reservationID As Integer) As String
+        Dim query As String = "SELECT ReservationStatus FROM reservations WHERE ReservationID = @reservationID"
+        Dim parameters As MySqlParameter() = {
+            New MySqlParameter("@reservationID", reservationID)
+        }
+
+        Dim result As Object = modDB.ExecuteScalar(query, parameters)
+        If result IsNot Nothing Then
+            Return result.ToString()
+        End If
+        Return "Unknown"
+    End Function
+
+    ''' <summary>
+    ''' Deducts inventory using the stored procedure
+    ''' </summary>
+    Private Sub DeductInventoryForReservation(reservationID As Integer)
+        Dim conn As MySqlConnection = Nothing
+        Dim cmd As MySqlCommand = Nothing
+
+        Try
+            conn = New MySqlConnection(modDB.ConnectionString)
+            conn.Open()
+
+            ' Call the stored procedure
+            cmd = New MySqlCommand("DeductIngredientsForReservation", conn)
+            cmd.CommandType = CommandType.StoredProcedure
+            cmd.Parameters.AddWithValue("@p_reservation_id", reservationID)
+            cmd.CommandTimeout = 60 ' 60 seconds timeout
+
+            cmd.ExecuteNonQuery()
+
+        Catch ex As MySqlException
+            Throw New Exception($"Database error deducting inventory: {ex.Message}", ex)
+        Catch ex As Exception
+            Throw New Exception($"Error deducting inventory: {ex.Message}", ex)
+        Finally
+            If cmd IsNot Nothing Then cmd.Dispose()
+            If conn IsNot Nothing AndAlso conn.State = ConnectionState.Open Then
+                conn.Close()
+                conn.Dispose()
+            End If
+        End Try
+    End Sub
+
     Public Function GetTodayReservationsCount() As Integer
         Dim query As String = "SELECT COUNT(*) FROM reservations WHERE DATE(EventDate) = CURDATE() AND ReservationStatus IN ('Accepted', 'Confirmed')"
         Dim result As Object = modDB.ExecuteScalar(query)
@@ -194,7 +262,7 @@ Public Class ReservationRepository
         Dim parameters As MySqlParameter() = {
             New MySqlParameter("@reservationID", reservationID)
         }
-        
+
         Dim table As DataTable = modDB.ExecuteQuery(query, parameters)
         If table IsNot Nothing Then
             For Each row As DataRow In table.Rows
@@ -208,7 +276,7 @@ Public Class ReservationRepository
                 })
             Next
         End If
-        
+
         Return items
     End Function
 End Class
