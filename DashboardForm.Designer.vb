@@ -1,4 +1,4 @@
-<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class DashboardForm
     Inherits System.Windows.Forms.Form
 
@@ -40,16 +40,37 @@ Partial Class DashboardForm
         lblCardTimeValue = New Label()
         lblCardTimeTitle = New Label()
         tlpBottom = New TableLayoutPanel()
-        pnlActiveOrders = New Panel()
-        pnlActiveOrdersPlaceholder = New Panel()
-        TableLayoutPanel1 = New TableLayoutPanel()
-        lblActiveOrdersSubtitle = New Label()
+        pnlTodayOrders = New Panel()
+        TableLayoutPanel3 = New TableLayoutPanel()
+        Panel1 = New Panel()
         lblActiveOrdersTitle = New Label()
+        lblActiveOrdersSubtitle = New Label()
+        Panel2 = New Panel()
+        pnlActiveOrdersPlaceholder = New Panel()
+        Panel20 = New Panel()
+        Label5 = New Label()
+        Label10 = New Label()
+        TableLayoutPanel1 = New TableLayoutPanel()
+        Label2 = New Label()
+        Button1 = New Button()
+        Label3 = New Label()
+        btn = New Button()
+        Label4 = New Label()
+        Label1 = New Label()
         pnlTodayReservations = New Panel()
-        pnlTodayReservationsPlaceholder = New Panel()
-        TableLayoutPanel2 = New TableLayoutPanel()
-        lblTodayReservationsSubtitle = New Label()
+        TableLayoutPanel4 = New TableLayoutPanel()
+        Panel3 = New Panel()
         lblTodayReservationsTitle = New Label()
+        lblTodayReservationsSubtitle = New Label()
+        Panel4 = New Panel()
+        pnlTodayReservationsPlaceholder = New Panel()
+        Panel7 = New Panel()
+        LblTime = New Label()
+        Button4 = New Button()
+        lblGuest = New Label()
+        Button5 = New Button()
+        lblName = New Label()
+        TableLayoutPanel2 = New TableLayoutPanel()
         tlpRoot.SuspendLayout()
         pnlHeader.SuspendLayout()
         tlpCards.SuspendLayout()
@@ -57,9 +78,15 @@ Partial Class DashboardForm
         pnlCardReservations.SuspendLayout()
         pnlCardTime.SuspendLayout()
         tlpBottom.SuspendLayout()
-        pnlActiveOrders.SuspendLayout()
+        pnlTodayOrders.SuspendLayout()
+        TableLayoutPanel3.SuspendLayout()
+        Panel1.SuspendLayout()
+        Panel2.SuspendLayout()
         pnlActiveOrdersPlaceholder.SuspendLayout()
         pnlTodayReservations.SuspendLayout()
+        TableLayoutPanel4.SuspendLayout()
+        Panel3.SuspendLayout()
+        Panel4.SuspendLayout()
         pnlTodayReservationsPlaceholder.SuspendLayout()
         SuspendLayout()
         ' 
@@ -79,7 +106,7 @@ Partial Class DashboardForm
         tlpRoot.RowStyles.Add(New RowStyle())
         tlpRoot.RowStyles.Add(New RowStyle())
         tlpRoot.RowStyles.Add(New RowStyle(SizeType.Percent, 100F))
-        tlpRoot.Size = New Size(1120, 620)
+        tlpRoot.Size = New Size(1783, 826)
         tlpRoot.TabIndex = 0
         ' 
         ' pnlHeader
@@ -91,7 +118,7 @@ Partial Class DashboardForm
         pnlHeader.Location = New Point(24, 24)
         pnlHeader.Margin = New Padding(0, 0, 0, 16)
         pnlHeader.Name = "pnlHeader"
-        pnlHeader.Size = New Size(1072, 68)
+        pnlHeader.Size = New Size(1735, 68)
         pnlHeader.TabIndex = 0
         ' 
         ' lblSubHeader
@@ -134,7 +161,7 @@ Partial Class DashboardForm
         tlpCards.Name = "tlpCards"
         tlpCards.RowCount = 1
         tlpCards.RowStyles.Add(New RowStyle(SizeType.Percent, 100F))
-        tlpCards.Size = New Size(1072, 144)
+        tlpCards.Size = New Size(1735, 144)
         tlpCards.TabIndex = 1
         ' 
         ' pnlCardOrders
@@ -149,7 +176,7 @@ Partial Class DashboardForm
         pnlCardOrders.Margin = New Padding(0, 0, 12, 0)
         pnlCardOrders.Name = "pnlCardOrders"
         pnlCardOrders.Padding = New Padding(16)
-        pnlCardOrders.Size = New Size(256, 144)
+        pnlCardOrders.Size = New Size(421, 144)
         pnlCardOrders.TabIndex = 0
         ' 
         ' lblCardOrdersCaption
@@ -193,11 +220,11 @@ Partial Class DashboardForm
         pnlCardReservations.Controls.Add(lblCardReservationsValue)
         pnlCardReservations.Controls.Add(lblCardReservationsTitle)
         pnlCardReservations.Dock = DockStyle.Fill
-        pnlCardReservations.Location = New Point(268, 0)
+        pnlCardReservations.Location = New Point(433, 0)
         pnlCardReservations.Margin = New Padding(0, 0, 12, 0)
         pnlCardReservations.Name = "pnlCardReservations"
         pnlCardReservations.Padding = New Padding(16)
-        pnlCardReservations.Size = New Size(256, 144)
+        pnlCardReservations.Size = New Size(421, 144)
         pnlCardReservations.TabIndex = 1
         ' 
         ' lblCardReservationsCaption
@@ -241,11 +268,11 @@ Partial Class DashboardForm
         pnlCardTime.Controls.Add(lblCardTimeValue)
         pnlCardTime.Controls.Add(lblCardTimeTitle)
         pnlCardTime.Dock = DockStyle.Fill
-        pnlCardTime.Location = New Point(536, 0)
+        pnlCardTime.Location = New Point(866, 0)
         pnlCardTime.Margin = New Padding(0, 0, 12, 0)
         pnlCardTime.Name = "pnlCardTime"
         pnlCardTime.Padding = New Padding(16)
-        pnlCardTime.Size = New Size(256, 144)
+        pnlCardTime.Size = New Size(421, 144)
         pnlCardTime.TabIndex = 2
         ' 
         ' lblCardTimeCaption
@@ -286,7 +313,7 @@ Partial Class DashboardForm
         tlpBottom.ColumnCount = 2
         tlpBottom.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50F))
         tlpBottom.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50F))
-        tlpBottom.Controls.Add(pnlActiveOrders, 0, 0)
+        tlpBottom.Controls.Add(pnlTodayOrders, 0, 0)
         tlpBottom.Controls.Add(pnlTodayReservations, 1, 0)
         tlpBottom.Dock = DockStyle.Fill
         tlpBottom.Location = New Point(24, 276)
@@ -294,35 +321,130 @@ Partial Class DashboardForm
         tlpBottom.Name = "tlpBottom"
         tlpBottom.RowCount = 1
         tlpBottom.RowStyles.Add(New RowStyle(SizeType.Percent, 100F))
-        tlpBottom.Size = New Size(1072, 320)
+        tlpBottom.Size = New Size(1735, 526)
         tlpBottom.TabIndex = 2
         ' 
-        ' pnlActiveOrders
+        ' pnlTodayOrders
         ' 
-        pnlActiveOrders.BackColor = Color.FromArgb(CByte(251), CByte(239), CByte(236))
-        pnlActiveOrders.BorderStyle = BorderStyle.FixedSingle
-        pnlActiveOrders.Controls.Add(pnlActiveOrdersPlaceholder)
-        pnlActiveOrders.Controls.Add(lblActiveOrdersSubtitle)
-        pnlActiveOrders.Controls.Add(lblActiveOrdersTitle)
-        pnlActiveOrders.Dock = DockStyle.Fill
-        pnlActiveOrders.Location = New Point(0, 0)
-        pnlActiveOrders.Margin = New Padding(0, 0, 12, 0)
-        pnlActiveOrders.Name = "pnlActiveOrders"
-        pnlActiveOrders.Padding = New Padding(20)
-        pnlActiveOrders.Size = New Size(524, 320)
-        pnlActiveOrders.TabIndex = 0
+        pnlTodayOrders.BackColor = Color.FromArgb(CByte(251), CByte(239), CByte(236))
+        pnlTodayOrders.BorderStyle = BorderStyle.FixedSingle
+        pnlTodayOrders.Controls.Add(TableLayoutPanel3)
+        pnlTodayOrders.Dock = DockStyle.Fill
+        pnlTodayOrders.Location = New Point(0, 0)
+        pnlTodayOrders.Margin = New Padding(0, 0, 12, 0)
+        pnlTodayOrders.Name = "pnlTodayOrders"
+        pnlTodayOrders.Padding = New Padding(20)
+        pnlTodayOrders.Size = New Size(855, 526)
+        pnlTodayOrders.TabIndex = 0
+        ' 
+        ' TableLayoutPanel3
+        ' 
+        TableLayoutPanel3.ColumnCount = 1
+        TableLayoutPanel3.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100F))
+        TableLayoutPanel3.Controls.Add(Panel1, 0, 0)
+        TableLayoutPanel3.Controls.Add(Panel2, 0, 1)
+        TableLayoutPanel3.Dock = DockStyle.Fill
+        TableLayoutPanel3.Location = New Point(20, 20)
+        TableLayoutPanel3.Name = "TableLayoutPanel3"
+        TableLayoutPanel3.RowCount = 3
+        TableLayoutPanel3.RowStyles.Add(New RowStyle(SizeType.Percent, 14.2857113F))
+        TableLayoutPanel3.RowStyles.Add(New RowStyle(SizeType.Percent, 80.9523849F))
+        TableLayoutPanel3.RowStyles.Add(New RowStyle(SizeType.Percent, 4.761905F))
+        TableLayoutPanel3.Size = New Size(813, 484)
+        TableLayoutPanel3.TabIndex = 0
+        ' 
+        ' Panel1
+        ' 
+        Panel1.Controls.Add(lblActiveOrdersTitle)
+        Panel1.Controls.Add(lblActiveOrdersSubtitle)
+        Panel1.Dock = DockStyle.Fill
+        Panel1.Location = New Point(3, 3)
+        Panel1.Name = "Panel1"
+        Panel1.Size = New Size(807, 63)
+        Panel1.TabIndex = 0
+        ' 
+        ' lblActiveOrdersTitle
+        ' 
+        lblActiveOrdersTitle.AutoSize = True
+        lblActiveOrdersTitle.Font = New Font("Segoe UI", 14F, FontStyle.Bold)
+        lblActiveOrdersTitle.ForeColor = Color.Black
+        lblActiveOrdersTitle.Location = New Point(3, 1)
+        lblActiveOrdersTitle.Name = "lblActiveOrdersTitle"
+        lblActiveOrdersTitle.Size = New Size(166, 32)
+        lblActiveOrdersTitle.TabIndex = 0
+        lblActiveOrdersTitle.Text = "Today Orders"
+        ' 
+        ' lblActiveOrdersSubtitle
+        ' 
+        lblActiveOrdersSubtitle.AutoSize = True
+        lblActiveOrdersSubtitle.Font = New Font("Segoe UI", 10F)
+        lblActiveOrdersSubtitle.ForeColor = Color.FromArgb(CByte(85), CByte(85), CByte(85))
+        lblActiveOrdersSubtitle.Location = New Point(3, 41)
+        lblActiveOrdersSubtitle.Name = "lblActiveOrdersSubtitle"
+        lblActiveOrdersSubtitle.Size = New Size(203, 23)
+        lblActiveOrdersSubtitle.TabIndex = 1
+        lblActiveOrdersSubtitle.Text = "Orders being order today"
+        ' 
+        ' Panel2
+        ' 
+        Panel2.Controls.Add(pnlActiveOrdersPlaceholder)
+        Panel2.Dock = DockStyle.Fill
+        Panel2.Location = New Point(3, 72)
+        Panel2.Name = "Panel2"
+        Panel2.Size = New Size(807, 385)
+        Panel2.TabIndex = 1
         ' 
         ' pnlActiveOrdersPlaceholder
         ' 
-        pnlActiveOrdersPlaceholder.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         pnlActiveOrdersPlaceholder.AutoScroll = True
         pnlActiveOrdersPlaceholder.BackColor = Color.White
         pnlActiveOrdersPlaceholder.BorderStyle = BorderStyle.FixedSingle
+        pnlActiveOrdersPlaceholder.Controls.Add(Panel20)
+        pnlActiveOrdersPlaceholder.Controls.Add(Label5)
+        pnlActiveOrdersPlaceholder.Controls.Add(Label10)
         pnlActiveOrdersPlaceholder.Controls.Add(TableLayoutPanel1)
-        pnlActiveOrdersPlaceholder.Location = New Point(20, 96)
+        pnlActiveOrdersPlaceholder.Controls.Add(Label2)
+        pnlActiveOrdersPlaceholder.Controls.Add(Button1)
+        pnlActiveOrdersPlaceholder.Controls.Add(Label3)
+        pnlActiveOrdersPlaceholder.Controls.Add(btn)
+        pnlActiveOrdersPlaceholder.Controls.Add(Label4)
+        pnlActiveOrdersPlaceholder.Controls.Add(Label1)
+        pnlActiveOrdersPlaceholder.Dock = DockStyle.Fill
+        pnlActiveOrdersPlaceholder.Location = New Point(0, 0)
         pnlActiveOrdersPlaceholder.Name = "pnlActiveOrdersPlaceholder"
-        pnlActiveOrdersPlaceholder.Size = New Size(482, 204)
+        pnlActiveOrdersPlaceholder.Size = New Size(807, 385)
         pnlActiveOrdersPlaceholder.TabIndex = 2
+        ' 
+        ' Panel20
+        ' 
+        Panel20.BorderStyle = BorderStyle.FixedSingle
+        Panel20.ForeColor = Color.Black
+        Panel20.Location = New Point(2, 81)
+        Panel20.Name = "Panel20"
+        Panel20.Size = New Size(801, 1)
+        Panel20.TabIndex = 25
+        ' 
+        ' Label5
+        ' 
+        Label5.AutoSize = True
+        Label5.Font = New Font("Segoe UI", 7F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label5.ForeColor = Color.Black
+        Label5.Location = New Point(290, 36)
+        Label5.Name = "Label5"
+        Label5.Size = New Size(35, 15)
+        Label5.TabIndex = 33
+        Label5.Text = "(ETC)"
+        ' 
+        ' Label10
+        ' 
+        Label10.AutoSize = True
+        Label10.Font = New Font("Segoe UI Black", 12F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        Label10.ForeColor = Color.FromArgb(CByte(255), CByte(127), CByte(39))
+        Label10.Location = New Point(685, 28)
+        Label10.Name = "Label10"
+        Label10.Size = New Size(93, 28)
+        Label10.TabIndex = 32
+        Label10.Text = "₱250.00"
         ' 
         ' TableLayoutPanel1
         ' 
@@ -342,54 +464,233 @@ Partial Class DashboardForm
         TableLayoutPanel1.Size = New Size(2, 5)
         TableLayoutPanel1.TabIndex = 0
         ' 
-        ' lblActiveOrdersSubtitle
+        ' Label2
         ' 
-        lblActiveOrdersSubtitle.AutoSize = True
-        lblActiveOrdersSubtitle.Font = New Font("Segoe UI", 10F)
-        lblActiveOrdersSubtitle.ForeColor = Color.FromArgb(CByte(85), CByte(85), CByte(85))
-        lblActiveOrdersSubtitle.Location = New Point(20, 60)
-        lblActiveOrdersSubtitle.Name = "lblActiveOrdersSubtitle"
-        lblActiveOrdersSubtitle.Size = New Size(262, 23)
-        lblActiveOrdersSubtitle.TabIndex = 1
-        lblActiveOrdersSubtitle.Text = "Orders currently being processed"
+        Label2.AutoSize = True
+        Label2.Font = New Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label2.ForeColor = Color.Black
+        Label2.Location = New Point(139, 21)
+        Label2.Name = "Label2"
+        Label2.Size = New Size(61, 20)
+        Label2.TabIndex = 27
+        Label2.Text = "6:19 PM"
         ' 
-        ' lblActiveOrdersTitle
+        ' Button1
         ' 
-        lblActiveOrdersTitle.AutoSize = True
-        lblActiveOrdersTitle.Font = New Font("Segoe UI", 14F, FontStyle.Bold)
-        lblActiveOrdersTitle.ForeColor = Color.Black
-        lblActiveOrdersTitle.Location = New Point(20, 20)
-        lblActiveOrdersTitle.Name = "lblActiveOrdersTitle"
-        lblActiveOrdersTitle.Size = New Size(169, 32)
-        lblActiveOrdersTitle.TabIndex = 0
-        lblActiveOrdersTitle.Text = "Active Orders"
+        Button1.BackColor = Color.WhiteSmoke
+        Button1.FlatStyle = FlatStyle.Flat
+        Button1.Font = New Font("Segoe UI", 10F, FontStyle.Bold)
+        Button1.ForeColor = Color.Red
+        Button1.Location = New Point(509, 22)
+        Button1.Margin = New Padding(25)
+        Button1.Name = "Button1"
+        Button1.Size = New Size(116, 40)
+        Button1.TabIndex = 31
+        Button1.Text = "Cancel"
+        Button1.UseVisualStyleBackColor = False
+        ' 
+        ' Label3
+        ' 
+        Label3.AutoSize = True
+        Label3.Font = New Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label3.ForeColor = Color.Black
+        Label3.Location = New Point(139, 41)
+        Label3.Name = "Label3"
+        Label3.Size = New Size(58, 20)
+        Label3.TabIndex = 28
+        Label3.Text = "Dine-In"
+        ' 
+        ' btn
+        ' 
+        btn.BackColor = Color.WhiteSmoke
+        btn.FlatStyle = FlatStyle.Flat
+        btn.Font = New Font("Segoe UI", 10F, FontStyle.Bold)
+        btn.ForeColor = Color.FromArgb(CByte(0), CByte(192), CByte(0))
+        btn.Location = New Point(375, 22)
+        btn.Margin = New Padding(25)
+        btn.Name = "btn"
+        btn.Size = New Size(116, 40)
+        btn.TabIndex = 30
+        btn.Text = "Complete"
+        btn.UseVisualStyleBackColor = False
+        ' 
+        ' Label4
+        ' 
+        Label4.AutoSize = True
+        Label4.Font = New Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label4.ForeColor = Color.Black
+        Label4.Location = New Point(237, 31)
+        Label4.Name = "Label4"
+        Label4.Size = New Size(56, 20)
+        Label4.TabIndex = 29
+        Label4.Text = "15mins"
+        ' 
+        ' Label1
+        ' 
+        Label1.AutoSize = True
+        Label1.Font = New Font("Segoe UI", 11F, FontStyle.Bold)
+        Label1.ForeColor = Color.Black
+        Label1.Location = New Point(15, 28)
+        Label1.Name = "Label1"
+        Label1.Size = New Size(78, 25)
+        Label1.TabIndex = 26
+        Label1.Text = "#13013"
         ' 
         ' pnlTodayReservations
         ' 
         pnlTodayReservations.BackColor = Color.FromArgb(CByte(251), CByte(239), CByte(236))
         pnlTodayReservations.BorderStyle = BorderStyle.FixedSingle
-        pnlTodayReservations.Controls.Add(pnlTodayReservationsPlaceholder)
-        pnlTodayReservations.Controls.Add(lblTodayReservationsSubtitle)
-        pnlTodayReservations.Controls.Add(lblTodayReservationsTitle)
+        pnlTodayReservations.Controls.Add(TableLayoutPanel4)
         pnlTodayReservations.Dock = DockStyle.Fill
-        pnlTodayReservations.Location = New Point(548, 0)
+        pnlTodayReservations.Location = New Point(879, 0)
         pnlTodayReservations.Margin = New Padding(12, 0, 0, 0)
         pnlTodayReservations.Name = "pnlTodayReservations"
         pnlTodayReservations.Padding = New Padding(20)
-        pnlTodayReservations.Size = New Size(524, 320)
+        pnlTodayReservations.Size = New Size(856, 526)
         pnlTodayReservations.TabIndex = 1
+        ' 
+        ' TableLayoutPanel4
+        ' 
+        TableLayoutPanel4.ColumnCount = 1
+        TableLayoutPanel4.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100F))
+        TableLayoutPanel4.Controls.Add(Panel3, 0, 0)
+        TableLayoutPanel4.Controls.Add(Panel4, 0, 1)
+        TableLayoutPanel4.Dock = DockStyle.Fill
+        TableLayoutPanel4.Location = New Point(20, 20)
+        TableLayoutPanel4.Name = "TableLayoutPanel4"
+        TableLayoutPanel4.RowCount = 2
+        TableLayoutPanel4.RowStyles.Add(New RowStyle(SizeType.Percent, 15F))
+        TableLayoutPanel4.RowStyles.Add(New RowStyle(SizeType.Percent, 85F))
+        TableLayoutPanel4.Size = New Size(814, 484)
+        TableLayoutPanel4.TabIndex = 0
+        ' 
+        ' Panel3
+        ' 
+        Panel3.Controls.Add(lblTodayReservationsTitle)
+        Panel3.Controls.Add(lblTodayReservationsSubtitle)
+        Panel3.Dock = DockStyle.Fill
+        Panel3.Location = New Point(3, 3)
+        Panel3.Name = "Panel3"
+        Panel3.Size = New Size(808, 66)
+        Panel3.TabIndex = 0
+        ' 
+        ' lblTodayReservationsTitle
+        ' 
+        lblTodayReservationsTitle.AutoSize = True
+        lblTodayReservationsTitle.Font = New Font("Segoe UI", 14F, FontStyle.Bold)
+        lblTodayReservationsTitle.ForeColor = Color.Black
+        lblTodayReservationsTitle.Location = New Point(3, 1)
+        lblTodayReservationsTitle.Name = "lblTodayReservationsTitle"
+        lblTodayReservationsTitle.Size = New Size(235, 32)
+        lblTodayReservationsTitle.TabIndex = 0
+        lblTodayReservationsTitle.Text = "Today Reservations"
+        ' 
+        ' lblTodayReservationsSubtitle
+        ' 
+        lblTodayReservationsSubtitle.AutoSize = True
+        lblTodayReservationsSubtitle.Font = New Font("Segoe UI", 10F)
+        lblTodayReservationsSubtitle.ForeColor = Color.FromArgb(CByte(85), CByte(85), CByte(85))
+        lblTodayReservationsSubtitle.Location = New Point(3, 41)
+        lblTodayReservationsSubtitle.Name = "lblTodayReservationsSubtitle"
+        lblTodayReservationsSubtitle.Size = New Size(248, 23)
+        lblTodayReservationsSubtitle.TabIndex = 1
+        lblTodayReservationsSubtitle.Text = "Upcoming bookings to prepare"
+        ' 
+        ' Panel4
+        ' 
+        Panel4.Controls.Add(pnlTodayReservationsPlaceholder)
+        Panel4.Dock = DockStyle.Fill
+        Panel4.Location = New Point(3, 75)
+        Panel4.Name = "Panel4"
+        Panel4.Size = New Size(808, 406)
+        Panel4.TabIndex = 1
         ' 
         ' pnlTodayReservationsPlaceholder
         ' 
-        pnlTodayReservationsPlaceholder.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         pnlTodayReservationsPlaceholder.AutoScroll = True
         pnlTodayReservationsPlaceholder.BackColor = Color.White
         pnlTodayReservationsPlaceholder.BorderStyle = BorderStyle.FixedSingle
+        pnlTodayReservationsPlaceholder.Controls.Add(Panel7)
+        pnlTodayReservationsPlaceholder.Controls.Add(LblTime)
+        pnlTodayReservationsPlaceholder.Controls.Add(Button4)
+        pnlTodayReservationsPlaceholder.Controls.Add(lblGuest)
+        pnlTodayReservationsPlaceholder.Controls.Add(Button5)
+        pnlTodayReservationsPlaceholder.Controls.Add(lblName)
         pnlTodayReservationsPlaceholder.Controls.Add(TableLayoutPanel2)
-        pnlTodayReservationsPlaceholder.Location = New Point(20, 96)
+        pnlTodayReservationsPlaceholder.Dock = DockStyle.Fill
+        pnlTodayReservationsPlaceholder.Location = New Point(0, 0)
         pnlTodayReservationsPlaceholder.Name = "pnlTodayReservationsPlaceholder"
-        pnlTodayReservationsPlaceholder.Size = New Size(482, 204)
+        pnlTodayReservationsPlaceholder.Size = New Size(808, 406)
         pnlTodayReservationsPlaceholder.TabIndex = 2
+        ' 
+        ' Panel7
+        ' 
+        Panel7.BorderStyle = BorderStyle.FixedSingle
+        Panel7.Location = New Point(3, 78)
+        Panel7.Name = "Panel7"
+        Panel7.Size = New Size(801, 1)
+        Panel7.TabIndex = 32
+        ' 
+        ' LblTime
+        ' 
+        LblTime.AutoSize = True
+        LblTime.Font = New Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        LblTime.ForeColor = Color.Black
+        LblTime.Location = New Point(304, 18)
+        LblTime.Name = "LblTime"
+        LblTime.Size = New Size(61, 20)
+        LblTime.TabIndex = 34
+        LblTime.Text = "6:19 PM"
+        ' 
+        ' Button4
+        ' 
+        Button4.BackColor = Color.WhiteSmoke
+        Button4.FlatStyle = FlatStyle.Flat
+        Button4.Font = New Font("Segoe UI", 10F, FontStyle.Bold)
+        Button4.ForeColor = Color.Red
+        Button4.Location = New Point(658, 19)
+        Button4.Margin = New Padding(25)
+        Button4.Name = "Button4"
+        Button4.Size = New Size(116, 40)
+        Button4.TabIndex = 37
+        Button4.Text = "Cancel"
+        Button4.UseVisualStyleBackColor = False
+        ' 
+        ' lblGuest
+        ' 
+        lblGuest.AutoSize = True
+        lblGuest.Font = New Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblGuest.ForeColor = Color.Black
+        lblGuest.Location = New Point(297, 38)
+        lblGuest.Name = "lblGuest"
+        lblGuest.Size = New Size(72, 20)
+        lblGuest.TabIndex = 35
+        lblGuest.Text = "14 Guests"
+        ' 
+        ' Button5
+        ' 
+        Button5.BackColor = Color.WhiteSmoke
+        Button5.FlatStyle = FlatStyle.Flat
+        Button5.Font = New Font("Segoe UI", 10F, FontStyle.Bold)
+        Button5.ForeColor = Color.FromArgb(CByte(0), CByte(192), CByte(0))
+        Button5.Location = New Point(524, 19)
+        Button5.Margin = New Padding(25)
+        Button5.Name = "Button5"
+        Button5.Size = New Size(116, 40)
+        Button5.TabIndex = 36
+        Button5.Text = "Complete"
+        Button5.UseVisualStyleBackColor = False
+        ' 
+        ' lblName
+        ' 
+        lblName.AutoSize = True
+        lblName.Font = New Font("Segoe UI", 11F, FontStyle.Bold)
+        lblName.ForeColor = Color.Black
+        lblName.Location = New Point(26, 25)
+        lblName.Name = "lblName"
+        lblName.Size = New Size(163, 25)
+        lblName.TabIndex = 33
+        lblName.Text = "Angelo Malaluan"
         ' 
         ' TableLayoutPanel2
         ' 
@@ -409,34 +710,12 @@ Partial Class DashboardForm
         TableLayoutPanel2.Size = New Size(2, 5)
         TableLayoutPanel2.TabIndex = 1
         ' 
-        ' lblTodayReservationsSubtitle
-        ' 
-        lblTodayReservationsSubtitle.AutoSize = True
-        lblTodayReservationsSubtitle.Font = New Font("Segoe UI", 10F)
-        lblTodayReservationsSubtitle.ForeColor = Color.FromArgb(CByte(85), CByte(85), CByte(85))
-        lblTodayReservationsSubtitle.Location = New Point(20, 60)
-        lblTodayReservationsSubtitle.Name = "lblTodayReservationsSubtitle"
-        lblTodayReservationsSubtitle.Size = New Size(248, 23)
-        lblTodayReservationsSubtitle.TabIndex = 1
-        lblTodayReservationsSubtitle.Text = "Upcoming bookings to prepare"
-        ' 
-        ' lblTodayReservationsTitle
-        ' 
-        lblTodayReservationsTitle.AutoSize = True
-        lblTodayReservationsTitle.Font = New Font("Segoe UI", 14F, FontStyle.Bold)
-        lblTodayReservationsTitle.ForeColor = Color.Black
-        lblTodayReservationsTitle.Location = New Point(20, 20)
-        lblTodayReservationsTitle.Name = "lblTodayReservationsTitle"
-        lblTodayReservationsTitle.Size = New Size(235, 32)
-        lblTodayReservationsTitle.TabIndex = 0
-        lblTodayReservationsTitle.Text = "Today Reservations"
-        ' 
         ' DashboardForm
         ' 
         AutoScaleDimensions = New SizeF(9F, 23F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.White
-        ClientSize = New Size(1120, 620)
+        ClientSize = New Size(1783, 826)
         Controls.Add(tlpRoot)
         Font = New Font("Segoe UI", 10F)
         FormBorderStyle = FormBorderStyle.None
@@ -453,12 +732,18 @@ Partial Class DashboardForm
         pnlCardTime.ResumeLayout(False)
         pnlCardTime.PerformLayout()
         tlpBottom.ResumeLayout(False)
-        pnlActiveOrders.ResumeLayout(False)
-        pnlActiveOrders.PerformLayout()
+        pnlTodayOrders.ResumeLayout(False)
+        TableLayoutPanel3.ResumeLayout(False)
+        Panel1.ResumeLayout(False)
+        Panel1.PerformLayout()
+        Panel2.ResumeLayout(False)
         pnlActiveOrdersPlaceholder.ResumeLayout(False)
         pnlActiveOrdersPlaceholder.PerformLayout()
         pnlTodayReservations.ResumeLayout(False)
-        pnlTodayReservations.PerformLayout()
+        TableLayoutPanel4.ResumeLayout(False)
+        Panel3.ResumeLayout(False)
+        Panel3.PerformLayout()
+        Panel4.ResumeLayout(False)
         pnlTodayReservationsPlaceholder.ResumeLayout(False)
         pnlTodayReservationsPlaceholder.PerformLayout()
         ResumeLayout(False)
@@ -482,15 +767,36 @@ Partial Class DashboardForm
     Friend WithEvents lblCardTimeValue As Label
     Friend WithEvents lblCardTimeTitle As Label
     Friend WithEvents tlpBottom As TableLayoutPanel
-    Friend WithEvents pnlActiveOrders As Panel
+    Friend WithEvents pnlTodayOrders As Panel
     Friend WithEvents pnlActiveOrdersPlaceholder As Panel
     Friend WithEvents lblActiveOrdersSubtitle As Label
     Friend WithEvents lblActiveOrdersTitle As Label
     Friend WithEvents pnlTodayReservations As Panel
-    Friend WithEvents pnlTodayReservationsPlaceholder As Panel
     Friend WithEvents lblTodayReservationsSubtitle As Label
     Friend WithEvents lblTodayReservationsTitle As Label
     Friend WithEvents TableLayoutPanel1 As TableLayoutPanel
+    Friend WithEvents Panel20 As Panel
+    Friend WithEvents Label5 As Label
+    Friend WithEvents Label10 As Label
+    Friend WithEvents Label2 As Label
+    Friend WithEvents Button1 As Button
+    Friend WithEvents Label3 As Label
+    Friend WithEvents btn As Button
+    Friend WithEvents Label4 As Label
+    Friend WithEvents Label1 As Label
+    Friend WithEvents TableLayoutPanel3 As TableLayoutPanel
+    Friend WithEvents Panel1 As Panel
+    Friend WithEvents Panel2 As Panel
+    Friend WithEvents TableLayoutPanel4 As TableLayoutPanel
+    Friend WithEvents Panel3 As Panel
+    Friend WithEvents Panel4 As Panel
+    Friend WithEvents pnlTodayReservationsPlaceholder As Panel
     Friend WithEvents TableLayoutPanel2 As TableLayoutPanel
+    Friend WithEvents Panel7 As Panel
+    Friend WithEvents LblTime As Label
+    Friend WithEvents Button4 As Button
+    Friend WithEvents lblGuest As Label
+    Friend WithEvents Button5 As Button
+    Friend WithEvents lblName As Label
 End Class
 

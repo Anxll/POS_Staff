@@ -7,9 +7,8 @@ Public Class OrderRepository
         Dim totalPrepTime As Integer = 0
         If items IsNot Nothing Then
             For Each item In items
-                ' Assuming efficient parallel kitchen, but basic logic is usually sum or max.
-                ' Restoring "erased logic": defaulting to sum of prep times for now.
-                totalPrepTime += (item.PrepTime * item.Quantity)
+                ' Use the maximum prep time of any item in the order as the estimate
+                totalPrepTime = Math.Max(totalPrepTime, item.PrepTime)
             Next
         End If
 
@@ -26,7 +25,7 @@ Public Class OrderRepository
             New MySqlParameter("@orderTime", order.OrderTime),
             New MySqlParameter("@itemsCount", order.ItemsOrderedCount),
             New MySqlParameter("@totalAmount", order.TotalAmount),
-            New MySqlParameter("@orderStatus", order.OrderStatus),
+            New MySqlParameter("@orderStatus", If(String.IsNullOrEmpty(order.OrderStatus), "Confirmed", order.OrderStatus)),
             New MySqlParameter("@remarks", If(String.IsNullOrEmpty(order.Remarks), DBNull.Value, order.Remarks)),
             New MySqlParameter("@prepTime", totalPrepTime)
         }
@@ -74,7 +73,6 @@ Public Class OrderRepository
         Catch ex As Exception
             ' Debugging: Show the specific error to the user
             MessageBox.Show($"Order creation failed details: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            System.Diagnostics.Debug.WriteLine($"Order creation error: {ex.Message}")
         End Try
         
         Return 0
@@ -94,10 +92,13 @@ Public Class OrderRepository
 
     Public Function GetActiveOrders() As List(Of Order)
         Dim orders As New List(Of Order)
-        ' Buffered loading: Fetch ALL active orders directly
-        Dim query As String = "SELECT OrderID, CustomerID, OrderType, OrderSource, OrderDate, OrderTime, TotalAmount, OrderStatus, PreparationTimeEstimate " &
-                              "FROM orders WHERE OrderStatus IN ('Pending', 'Preparing', 'Serving', 'Served') " &
-                              "ORDER BY OrderDate DESC, OrderTime DESC"
+        ' Fetch all orders for today join with customers name
+        Dim query As String = "SELECT o.OrderID, o.CustomerID, o.OrderType, o.OrderSource, o.OrderDate, o.OrderTime, o.TotalAmount, o.OrderStatus, o.PreparationTimeEstimate, " &
+                              "CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName " &
+                              "FROM orders o " &
+                              "LEFT JOIN customers c ON o.CustomerID = c.CustomerID " &
+                              "WHERE DATE(o.OrderDate) = CURDATE() " &
+                              "ORDER BY o.OrderDate DESC, o.OrderTime DESC"
         
         Dim table As DataTable = modDB.ExecuteQuery(query)
         If table IsNot Nothing Then
@@ -110,10 +111,16 @@ Public Class OrderRepository
                 order.TotalAmount = Convert.ToDecimal(row("TotalAmount"))
                 order.OrderDate = Convert.ToDateTime(row("OrderDate"))
                 order.OrderTime = CType(row("OrderTime"), TimeSpan)
-                order.OrderStatus = row("OrderStatus").ToString()
-                ' Safely read nullable integer
+                order.OrderStatus = If(IsDBNull(row("OrderStatus")) OrElse String.IsNullOrEmpty(row("OrderStatus").ToString()), "Confirmed", row("OrderStatus").ToString())
+                
                 If row.Table.Columns.Contains("PreparationTimeEstimate") AndAlso Not IsDBNull(row("PreparationTimeEstimate")) Then
                     order.PreparationTimeEstimate = Convert.ToInt32(row("PreparationTimeEstimate"))
+                End If
+
+                If Not IsDBNull(row("CustomerName")) Then
+                    order.CustomerName = row("CustomerName").ToString()
+                Else
+                    order.CustomerName = "Walk-in Customer"
                 End If
                 
                 orders.Add(order)
@@ -213,7 +220,7 @@ Public Class OrderRepository
             whereClause &= " AND o.OrderStatus = '" & statusFilter.Replace("'", "''") & "'"
         End If
         
-        Dim query As String = "SELECT o.OrderID, o.CustomerID, o.OrderType, o.OrderSource, o.WebsiteStatus, o.OrderDate, o.OrderTime, " &
+        Dim query As String = "SELECT o.OrderID, o.CustomerID, o.OrderType, o.OrderSource, o.OrderDate, o.OrderTime, " &
                               "o.ItemsOrderedCount, o.TotalAmount, o.OrderStatus, o.Remarks, o.DeliveryAddress, " &
                               "o.SpecialRequests, o.CreatedDate, o.UpdatedDate, " &
                               "c.FirstName, c.LastName, c.Email, c.ContactNumber " &
@@ -233,7 +240,6 @@ Public Class OrderRepository
                 onlineOrder.ContactNumber = If(IsDBNull(row("ContactNumber")), "", row("ContactNumber").ToString())
                 onlineOrder.OrderType = row("OrderType").ToString()
                 onlineOrder.OrderSource = row("OrderSource").ToString()
-                onlineOrder.WebsiteStatus = If(IsDBNull(row("WebsiteStatus")), "", row("WebsiteStatus").ToString())
                 onlineOrder.OrderDate = Convert.ToDateTime(row("OrderDate"))
                 onlineOrder.OrderTime = CType(row("OrderTime"), TimeSpan)
                 onlineOrder.ItemsOrderedCount = Convert.ToInt32(row("ItemsOrderedCount"))
@@ -298,4 +304,29 @@ Public Class OrderRepository
     Public Async Function GetTotalActiveOrdersCountAsync() As Task(Of Integer)
         Return Await Task.Run(Function() GetTotalActiveOrdersCount())
     End Function
+
+    ''' <summary>
+    ''' Calculates and updates the PreparationTimeEstimate for an order based on its items' product PrepTime
+    ''' </summary>
+    Public Sub UpdateOrderPreparationTime(orderID As Integer)
+        ' Query to get the MAX(PrepTime) from the products table for all items in the order
+        Dim query As String = "UPDATE orders o " &
+                             "SET o.PreparationTimeEstimate = (" &
+                             "    SELECT MAX(p.PrepTime) " &
+                             "    FROM order_items oi " &
+                             "    JOIN products p ON oi.ProductName = p.ProductName " &
+                             "    WHERE oi.OrderID = @orderID" &
+                             ") " &
+                             "WHERE o.OrderID = @orderID"
+        
+        Dim parameters As MySqlParameter() = {
+            New MySqlParameter("@orderID", orderID)
+        }
+        
+        Try
+            modDB.ExecuteNonQuery(query, parameters)
+        Catch ex As Exception
+            System.Diagnostics.Debug.WriteLine($"Failed to update prep time for Order #{orderID}: {ex.Message}")
+        End Try
+    End Sub
 End Class

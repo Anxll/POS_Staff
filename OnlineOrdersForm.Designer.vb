@@ -28,8 +28,6 @@ Partial Class OnlineOrdersForm
         lblSubHeader = New Label()
         lblHeader = New Label()
         TableLayoutPanel2 = New TableLayoutPanel()
-        Panel1 = New Panel()
-        btnRefresh = New Button()
         Panel2 = New Panel()
         ResTemplate = New Panel()
         Button3 = New Button()
@@ -46,16 +44,18 @@ Partial Class OnlineOrdersForm
         lblDate2 = New Label()
         lblTime2 = New Label()
         lblCompleted = New Label()
+        Panel1 = New Panel()
+        btnRefresh = New Button()
         TableLayoutPanel1.SuspendLayout()
         pnlHeader.SuspendLayout()
         TableLayoutPanel2.SuspendLayout()
-        Panel1.SuspendLayout()
         Panel2.SuspendLayout()
         ResTemplate.SuspendLayout()
         CType(PictureBox8, ComponentModel.ISupportInitialize).BeginInit()
         CType(PictureBox6, ComponentModel.ISupportInitialize).BeginInit()
         CType(PictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         CType(PictureBox3, ComponentModel.ISupportInitialize).BeginInit()
+        Panel1.SuspendLayout()
         SuspendLayout()
         ' 
         ' TableLayoutPanel1
@@ -126,31 +126,6 @@ Partial Class OnlineOrdersForm
         TableLayoutPanel2.RowStyles.Add(New RowStyle(SizeType.Percent, 85F))
         TableLayoutPanel2.Size = New Size(1575, 633)
         TableLayoutPanel2.TabIndex = 2
-        ' 
-        ' Panel1
-        ' 
-        Panel1.Controls.Add(btnRefresh)
-        Panel1.Dock = DockStyle.Fill
-        Panel1.Location = New Point(3, 3)
-        Panel1.Name = "Panel1"
-        Panel1.Size = New Size(1569, 88)
-        Panel1.TabIndex = 0
-        ' 
-        ' btnRefresh
-        ' 
-        btnRefresh.BackColor = Color.FromArgb(CByte(52), CByte(152), CByte(219))
-        btnRefresh.FlatAppearance.BorderColor = Color.Black
-        btnRefresh.FlatAppearance.MouseDownBackColor = Color.FromArgb(CByte(250), CByte(186), CByte(142))
-        btnRefresh.FlatStyle = FlatStyle.Flat
-        btnRefresh.Font = New Font("Segoe UI", 10F, FontStyle.Bold)
-        btnRefresh.ForeColor = Color.White
-        btnRefresh.Location = New Point(1341, 17)
-        btnRefresh.Margin = New Padding(25)
-        btnRefresh.Name = "btnRefresh"
-        btnRefresh.Size = New Size(154, 46)
-        btnRefresh.TabIndex = 7
-        btnRefresh.Text = "Refresh"
-        btnRefresh.UseVisualStyleBackColor = False
         ' 
         ' Panel2
         ' 
@@ -338,6 +313,31 @@ Partial Class OnlineOrdersForm
         lblCompleted.TabIndex = 14
         lblCompleted.Text = "COMPLETED"
         ' 
+        ' Panel1
+        ' 
+        Panel1.Controls.Add(btnRefresh)
+        Panel1.Dock = DockStyle.Fill
+        Panel1.Location = New Point(3, 3)
+        Panel1.Name = "Panel1"
+        Panel1.Size = New Size(1569, 88)
+        Panel1.TabIndex = 0
+        ' 
+        ' btnRefresh
+        ' 
+        btnRefresh.BackColor = Color.FromArgb(CByte(52), CByte(152), CByte(219))
+        btnRefresh.FlatAppearance.BorderColor = Color.Black
+        btnRefresh.FlatAppearance.MouseDownBackColor = Color.FromArgb(CByte(250), CByte(186), CByte(142))
+        btnRefresh.FlatStyle = FlatStyle.Flat
+        btnRefresh.Font = New Font("Segoe UI", 10F, FontStyle.Bold)
+        btnRefresh.ForeColor = Color.White
+        btnRefresh.Location = New Point(1341, 17)
+        btnRefresh.Margin = New Padding(25)
+        btnRefresh.Name = "btnRefresh"
+        btnRefresh.Size = New Size(154, 46)
+        btnRefresh.TabIndex = 7
+        btnRefresh.Text = "Refresh"
+        btnRefresh.UseVisualStyleBackColor = False
+        ' 
         ' OnlineOrdersForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
@@ -351,7 +351,6 @@ Partial Class OnlineOrdersForm
         pnlHeader.ResumeLayout(False)
         pnlHeader.PerformLayout()
         TableLayoutPanel2.ResumeLayout(False)
-        Panel1.ResumeLayout(False)
         Panel2.ResumeLayout(False)
         ResTemplate.ResumeLayout(False)
         ResTemplate.PerformLayout()
@@ -359,6 +358,7 @@ Partial Class OnlineOrdersForm
         CType(PictureBox6, ComponentModel.ISupportInitialize).EndInit()
         CType(PictureBox5, ComponentModel.ISupportInitialize).EndInit()
         CType(PictureBox3, ComponentModel.ISupportInitialize).EndInit()
+        Panel1.ResumeLayout(False)
         ResumeLayout(False)
     End Sub
 

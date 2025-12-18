@@ -25,7 +25,7 @@ Public Class ReservationRepository
                                 "c.Email, r.ContactNumber, r.NumberOfGuests, r.EventDate, r.EventTime, r.EventType, " &
                                 "r.ReservationStatus " &
                                 "FROM reservations r LEFT JOIN customers c ON r.CustomerID = c.CustomerID " &
-                                "WHERE DATE(r.EventDate) = CURDATE() AND r.ReservationStatus IN ('Accepted', 'Confirmed') " &
+                                "WHERE DATE(r.EventDate) = CURDATE() AND r.ReservationStatus IN ('Confirmed', 'Completed') " &
                                 "ORDER BY r.EventDate ASC, r.EventTime ASC"
         Return GetReservations(query)
     End Function
@@ -49,7 +49,7 @@ Public Class ReservationRepository
     End Function
 
     Public Function GetTotalTodayReservationsCount() As Integer
-        Dim query As String = "SELECT COUNT(*) FROM reservations WHERE DATE(EventDate) = CURDATE() AND ReservationStatus IN ('Accepted', 'Confirmed')"
+        Dim query As String = "SELECT COUNT(*) FROM reservations WHERE DATE(EventDate) = CURDATE() AND ReservationStatus IN ('Confirmed', 'Completed')"
         Dim result As Object = modDB.ExecuteScalar(query)
         If result IsNot Nothing AndAlso IsNumeric(result) Then
             Return CInt(result)
@@ -133,15 +133,6 @@ Public Class ReservationRepository
                     AddReservationItem(reservationID, item)
                 Next
                 
-                If reservation.ReservationStatus = "Confirmed" OrElse reservation.ReservationStatus = "Accepted" Then
-                    Try
-                        Dim inventoryService As New InventoryService()
-                        inventoryService.DeductInventoryForReservation(reservationID)
-                    Catch ex As Exception
-                        System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for reservation #{reservationID}: {ex.Message}")
-                    End Try
-                End If
-                
                 Return reservationID
             End If
         End If
@@ -170,20 +161,11 @@ Public Class ReservationRepository
         
         Dim success As Boolean = modDB.ExecuteNonQuery(query, parameters, silent) > 0
         
-        If success AndAlso (status = "Confirmed" OrElse status = "Accepted") Then
-            Try
-                Dim inventoryService As New InventoryService()
-                inventoryService.DeductInventoryForReservation(reservationID)
-            Catch ex As Exception
-                System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for reservation #{reservationID}: {ex.Message}")
-            End Try
-        End If
-        
         Return success
     End Function
     
     Public Function GetTodayReservationsCount() As Integer
-        Dim query As String = "SELECT COUNT(*) FROM reservations WHERE DATE(EventDate) = CURDATE() AND ReservationStatus IN ('Accepted', 'Confirmed')"
+        Dim query As String = "SELECT COUNT(*) FROM reservations WHERE DATE(EventDate) = CURDATE() AND ReservationStatus = 'Confirmed'"
         Dim result As Object = modDB.ExecuteScalar(query)
         If result IsNot Nothing AndAlso IsNumeric(result) Then
             Return CInt(result)

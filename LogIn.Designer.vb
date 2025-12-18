@@ -34,9 +34,9 @@ Partial Class LogIn
         Label3 = New Label()
         Label2 = New Label()
         Panel5 = New Panel()
-        EmployeeID = New TextBox()
+        txtPassword = New TextBox()
         Panel4 = New Panel()
-        txtEmail = New TextBox()
+        txtUsername = New TextBox()
         lblSubHeader = New Label()
         Label1 = New Label()
         Panel1 = New Panel()
@@ -171,9 +171,9 @@ Partial Class LogIn
         Label3.Font = New Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label3.Location = New Point(27, 260)
         Label3.Name = "Label3"
-        Label3.Size = New Size(106, 23)
+        Label3.Size = New Size(80, 23)
         Label3.TabIndex = 6
-        Label3.Text = "Employee ID"
+        Label3.Text = "Password"
         ' 
         ' Label2
         ' 
@@ -181,48 +181,48 @@ Partial Class LogIn
         Label2.Font = New Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label2.Location = New Point(27, 140)
         Label2.Name = "Label2"
-        Label2.Size = New Size(51, 23)
+        Label2.Size = New Size(87, 23)
         Label2.TabIndex = 4
-        Label2.Text = "Email"
+        Label2.Text = "Username"
         ' 
         ' Panel5
         ' 
         Panel5.BackColor = SystemColors.Window
         Panel5.BorderStyle = BorderStyle.FixedSingle
-        Panel5.Controls.Add(EmployeeID)
+        Panel5.Controls.Add(txtPassword)
         Panel5.Location = New Point(37, 295)
         Panel5.Name = "Panel5"
         Panel5.Size = New Size(410, 50)
         Panel5.TabIndex = 5
         ' 
-        ' EmployeeID
+        ' txtPassword
         ' 
-        EmployeeID.BorderStyle = BorderStyle.None
-        EmployeeID.Font = New Font("Segoe UI", 12F)
-        EmployeeID.Location = New Point(15, 11)
-        EmployeeID.Name = "EmployeeID"
-        EmployeeID.Size = New Size(378, 27)
-        EmployeeID.TabIndex = 4
-        EmployeeID.UseSystemPasswordChar = True
+        txtPassword.BorderStyle = BorderStyle.None
+        txtPassword.Font = New Font("Segoe UI", 12F)
+        txtPassword.Location = New Point(15, 11)
+        txtPassword.Name = "txtPassword"
+        txtPassword.Size = New Size(378, 27)
+        txtPassword.TabIndex = 4
+        txtPassword.UseSystemPasswordChar = True
         ' 
         ' Panel4
         ' 
         Panel4.BackColor = SystemColors.Window
         Panel4.BorderStyle = BorderStyle.FixedSingle
-        Panel4.Controls.Add(txtEmail)
+        Panel4.Controls.Add(txtUsername)
         Panel4.Location = New Point(37, 175)
         Panel4.Name = "Panel4"
         Panel4.Size = New Size(410, 50)
         Panel4.TabIndex = 3
         ' 
-        ' txtEmail
+        ' txtUsername
         ' 
-        txtEmail.BorderStyle = BorderStyle.None
-        txtEmail.Font = New Font("Segoe UI", 12F)
-        txtEmail.Location = New Point(15, 11)
-        txtEmail.Name = "txtEmail"
-        txtEmail.Size = New Size(378, 27)
-        txtEmail.TabIndex = 4
+        txtUsername.BorderStyle = BorderStyle.None
+        txtUsername.Font = New Font("Segoe UI", 12F)
+        txtUsername.Location = New Point(15, 11)
+        txtUsername.Name = "txtUsername"
+        txtUsername.Size = New Size(378, 27)
+        txtUsername.TabIndex = 4
         ' 
         ' lblSubHeader
         ' 
@@ -293,11 +293,11 @@ Partial Class LogIn
     Friend WithEvents Label1 As Label
     Friend WithEvents lblSubHeader As Label
     Friend WithEvents Panel4 As Panel
-    Friend WithEvents txtEmail As TextBox
+    Friend WithEvents txtUsername As TextBox
     Friend WithEvents Label3 As Label
     Friend WithEvents Label2 As Label
     Friend WithEvents Panel5 As Panel
-    Friend WithEvents EmployeeID As TextBox
+    Friend WithEvents txtPassword As TextBox
     Friend WithEvents btnLoginTimein As Button
     Friend WithEvents btnServerSettings As Button
     Friend WithEvents Panel6 As Panel
