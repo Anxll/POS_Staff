@@ -31,12 +31,13 @@ Partial Class LogIn
         Panel3 = New Panel()
         btnServerSettings = New Button()
         btnLoginTimein = New Button()
+        chkShowPassword = New CheckBox()
         Label3 = New Label()
         Label2 = New Label()
         Panel5 = New Panel()
-        EmployeeID = New TextBox()
+        txtPassword = New TextBox()
         Panel4 = New Panel()
-        txtEmail = New TextBox()
+        txtUsername = New TextBox()
         lblSubHeader = New Label()
         Label1 = New Label()
         Panel1 = New Panel()
@@ -54,7 +55,7 @@ Partial Class LogIn
         ' TableLayoutPanel1
         ' 
         TableLayoutPanel1.ColumnCount = 1
-        TableLayoutPanel1.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100F))
+        TableLayoutPanel1.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100.0F))
         TableLayoutPanel1.Controls.Add(pnlHeader, 0, 0)
         TableLayoutPanel1.Controls.Add(Panel2, 0, 1)
         TableLayoutPanel1.Dock = DockStyle.Fill
@@ -62,8 +63,8 @@ Partial Class LogIn
         TableLayoutPanel1.Margin = New Padding(0)
         TableLayoutPanel1.Name = "TableLayoutPanel1"
         TableLayoutPanel1.RowCount = 2
-        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Absolute, 88F))
-        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Percent, 100F))
+        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Absolute, 88.0F))
+        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Percent, 100.0F))
         TableLayoutPanel1.Size = New Size(1280, 720)
         TableLayoutPanel1.TabIndex = 0
         ' 
@@ -93,7 +94,7 @@ Partial Class LogIn
         ' 
         lblHeaderTitle.Anchor = AnchorStyles.None
         lblHeaderTitle.AutoSize = True
-        lblHeaderTitle.Font = New Font("Segoe UI Semibold", 14F, FontStyle.Bold)
+        lblHeaderTitle.Font = New Font("Segoe UI Semibold", 14.0F, FontStyle.Bold)
         lblHeaderTitle.ForeColor = SystemColors.Window
         lblHeaderTitle.Location = New Point(594, 15)
         lblHeaderTitle.Name = "lblHeaderTitle"
@@ -131,6 +132,7 @@ Partial Class LogIn
         Panel3.BorderStyle = BorderStyle.FixedSingle
         Panel3.Controls.Add(btnServerSettings)
         Panel3.Controls.Add(btnLoginTimein)
+        Panel3.Controls.Add(chkShowPassword)
         Panel3.Controls.Add(Label3)
         Panel3.Controls.Add(Label2)
         Panel3.Controls.Add(Panel5)
@@ -165,69 +167,80 @@ Partial Class LogIn
         btnLoginTimein.Text = "Login/Time-In"
         btnLoginTimein.UseVisualStyleBackColor = False
         ' 
+        ' chkShowPassword
+        ' 
+        chkShowPassword.AutoSize = True
+        chkShowPassword.Font = New Font("Segoe UI", 9.0F)
+        chkShowPassword.Location = New Point(40, 350)
+        chkShowPassword.Name = "chkShowPassword"
+        chkShowPassword.Size = New Size(129, 24)
+        chkShowPassword.TabIndex = 6
+        chkShowPassword.Text = "Show Password"
+        chkShowPassword.UseVisualStyleBackColor = True
+        ' 
         ' Label3
         ' 
         Label3.AutoSize = True
-        Label3.Font = New Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label3.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label3.Location = New Point(27, 260)
         Label3.Name = "Label3"
         Label3.Size = New Size(106, 23)
         Label3.TabIndex = 6
-        Label3.Text = "Employee ID"
+        Label3.Text = "Password"
         ' 
         ' Label2
         ' 
         Label2.AutoSize = True
-        Label2.Font = New Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label2.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label2.Location = New Point(27, 140)
         Label2.Name = "Label2"
         Label2.Size = New Size(51, 23)
         Label2.TabIndex = 4
-        Label2.Text = "Email"
+        Label2.Text = "Username"
         ' 
         ' Panel5
         ' 
         Panel5.BackColor = SystemColors.Window
         Panel5.BorderStyle = BorderStyle.FixedSingle
-        Panel5.Controls.Add(EmployeeID)
+        Panel5.Controls.Add(txtPassword)
         Panel5.Location = New Point(37, 295)
         Panel5.Name = "Panel5"
         Panel5.Size = New Size(410, 50)
         Panel5.TabIndex = 5
         ' 
-        ' EmployeeID
+        ' txtPassword
         ' 
-        EmployeeID.BorderStyle = BorderStyle.None
-        EmployeeID.Font = New Font("Segoe UI", 12F)
-        EmployeeID.Location = New Point(15, 11)
-        EmployeeID.Name = "EmployeeID"
-        EmployeeID.Size = New Size(378, 27)
-        EmployeeID.TabIndex = 4
-        EmployeeID.UseSystemPasswordChar = True
+        txtPassword.BorderStyle = BorderStyle.None
+        txtPassword.Font = New Font("Segoe UI", 12.0F)
+        txtPassword.Location = New Point(15, 11)
+        txtPassword.Name = "txtPassword"
+        txtPassword.Size = New Size(378, 27)
+        txtPassword.TabIndex = 4
+        txtPassword.UseSystemPasswordChar = True
         ' 
         ' Panel4
         ' 
         Panel4.BackColor = SystemColors.Window
         Panel4.BorderStyle = BorderStyle.FixedSingle
-        Panel4.Controls.Add(txtEmail)
+        Panel4.Controls.Add(txtUsername)
         Panel4.Location = New Point(37, 175)
         Panel4.Name = "Panel4"
         Panel4.Size = New Size(410, 50)
         Panel4.TabIndex = 3
         ' 
-        ' txtEmail
+        ' txtUsername
         ' 
-        txtEmail.BorderStyle = BorderStyle.None
-        txtEmail.Font = New Font("Segoe UI", 12F)
-        txtEmail.Location = New Point(15, 11)
-        txtEmail.Name = "txtEmail"
-        txtEmail.Size = New Size(378, 27)
-        txtEmail.TabIndex = 4
+        txtUsername.BorderStyle = BorderStyle.None
+        txtUsername.Font = New Font("Segoe UI", 12.0F)
+        txtUsername.Location = New Point(15, 11)
+        txtUsername.Name = "txtUsername"
+        txtUsername.Size = New Size(378, 27)
+        txtUsername.TabIndex = 4
         ' 
         ' lblSubHeader
         ' 
         lblSubHeader.AutoSize = True
-        lblSubHeader.Font = New Font("Segoe UI", 8F)
+        lblSubHeader.Font = New Font("Segoe UI", 8.0F)
         lblSubHeader.ForeColor = Color.FromArgb(CByte(85), CByte(85), CByte(85))
         lblSubHeader.Location = New Point(175, 85)
         lblSubHeader.Margin = New Padding(0)
@@ -239,7 +252,7 @@ Partial Class LogIn
         ' Label1
         ' 
         Label1.AutoSize = True
-        Label1.Font = New Font("Segoe UI Semibold", 14F, FontStyle.Bold)
+        Label1.Font = New Font("Segoe UI Semibold", 14.0F, FontStyle.Bold)
         Label1.ForeColor = Color.Black
         Label1.Location = New Point(211, 51)
         Label1.Name = "Label1"
@@ -258,7 +271,7 @@ Partial Class LogIn
         ' 
         ' LogIn
         ' 
-        AutoScaleDimensions = New SizeF(8F, 20F)
+        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(1280, 720)
         Controls.Add(Panel1)
@@ -293,11 +306,12 @@ Partial Class LogIn
     Friend WithEvents Label1 As Label
     Friend WithEvents lblSubHeader As Label
     Friend WithEvents Panel4 As Panel
-    Friend WithEvents txtEmail As TextBox
+    Friend WithEvents txtUsername As TextBox
     Friend WithEvents Label3 As Label
     Friend WithEvents Label2 As Label
     Friend WithEvents Panel5 As Panel
-    Friend WithEvents EmployeeID As TextBox
+    Friend WithEvents txtPassword As TextBox
+    Friend WithEvents chkShowPassword As CheckBox
     Friend WithEvents btnLoginTimein As Button
     Friend WithEvents btnServerSettings As Button
     Friend WithEvents Panel6 As Panel

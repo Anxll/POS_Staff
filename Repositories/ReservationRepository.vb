@@ -169,7 +169,7 @@ Public Class ReservationRepository
         modDB.ExecuteNonQuery(query, parameters)
     End Sub
 
-    Public Function UpdateReservationStatus(reservationID As Integer, status As String) As Boolean
+    Public Function UpdateReservationStatus(reservationID As Integer, status As String, Optional silent As Boolean = False) As Boolean
         Dim query As String = "UPDATE reservations SET ReservationStatus = @status WHERE ReservationID = @reservationID"
         Dim parameters As MySqlParameter() = {
             New MySqlParameter("@status", status),
