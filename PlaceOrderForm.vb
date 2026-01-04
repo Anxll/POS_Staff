@@ -561,24 +561,27 @@ Public Class PlaceOrderForm
                 .ItemsOrderedCount = itemsCount,
                 .TotalAmount = totalAmount,
                 .EmployeeID = CurrentSession.EmployeeID, ' Set EmployeeID
-                .OrderStatus = "Preparing"
+                .OrderStatus = "Confirmed" ' POS orders are auto-confirmed
             }
 
             Dim orderID As Integer = orderRepository.CreateOrder(newOrder, orderItems)
 
+
             If orderID > 0 Then
-                ' Deduct inventory for the order
-                Dim inventoryDeducted As Boolean = False
+                ' IMPORTANT: Refresh Dashboard FIRST to show the order immediately
                 Try
-                    inventoryDeducted = inventoryService.DeductInventoryForOrder(orderID, orderItems)
-                Catch invEx As Exception
-                    System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for Order #{orderID}: {invEx.Message}")
-                    ' Continue even if inventory deduction fails - order is already created
+                    Dim dashboardForm = Application.OpenForms.OfType(Of DashboardForm)().FirstOrDefault()
+                    If dashboardForm IsNot Nothing Then
+                        dashboardForm.RefreshActiveOrders()
+                    End If
+                Catch ex As Exception
+                    System.Diagnostics.Debug.WriteLine($"Dashboard refresh failed: {ex.Message}")
                 End Try
+
                 
                 Try
-                    ' Generate order number in format VT-YYYY-NNNNNN
-                    Dim orderNumber As String = $"VT-{DateTime.Now:yyyy}-{orderID:D6}"
+                    ' Generate order number in format VT-YYYY-NNNNNN-mmm (with milliseconds for uniqueness)
+                    Dim orderNumber As String = $"VT-{DateTime.Now:yyyy}-{orderID:D6}-{DateTime.Now:fff}"
 
                     ' Insert receipt data into database
                     Dim receiptRepo As New ReceiptRepository()
@@ -596,16 +599,9 @@ Public Class PlaceOrderForm
                     ' Update Receipt Number in Orders table
                     orderRepository.UpdateOrderReceiptNumber(orderID, orderNumber)
 
-                    ' Show success message with inventory confirmation
-                    Dim successMessage As String = $"Order #{orderID} has been placed successfully!" & vbCrLf & vbCrLf
-                    
-                    If inventoryDeducted Then
-                        successMessage &= "✓ Inventory deducted successfully" & vbCrLf
-                    Else
-                        successMessage &= "⚠ Warning: Inventory deduction may have failed" & vbCrLf
-                    End If
-                    
-                    successMessage &= vbCrLf & $"Receipt saved to: {pdfPath}"
+                    ' Show success message
+                    Dim successMessage As String = $"Order #{orderID} has been placed successfully!" & vbCrLf & vbCrLf &
+                                                   $"Receipt saved to: {pdfPath}"
                     
                     MessageBox.Show(
                         successMessage,
@@ -613,6 +609,7 @@ Public Class PlaceOrderForm
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information
                     )
+
 
                     ' Automatically open PDF
                     Try

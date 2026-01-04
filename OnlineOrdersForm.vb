@@ -131,31 +131,31 @@ Public Class OnlineOrdersForm
     Private Async Function LoadOnlineOrdersAsync() As Task
         If isLoading Then Return
         isLoading = True
-        
+
         Try
             Dim selectedStatus As String = "All Orders"
             If cmbFilterStatus.SelectedItem IsNot Nothing Then
                 selectedStatus = cmbFilterStatus.SelectedItem.ToString()
             End If
-            
+
             ' Load all into buffer (Background)
             Await Task.Run(Sub()
                                allOrders = orderRepository.GetOnlineOrdersPaged(0, 0, selectedStatus)
                            End Sub)
-            
+
             ' Calculate pagination
             totalRecords = allOrders.Count
             totalPages = Math.Max(1, CInt(Math.Ceiling(totalRecords / pageSize)))
-            
+
             If currentPage > totalPages Then currentPage = totalPages
             If currentPage < 1 Then currentPage = 1
-            
+
             ' Display first page
             DisplayCurrentPage()
-            
+
             ' Show pagination controls
             If pnlPagination IsNot Nothing Then pnlPagination.Visible = True
-            
+
         Catch ex As Exception
             MessageBox.Show($"Error loading online orders: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         Finally
@@ -169,7 +169,7 @@ Public Class OnlineOrdersForm
         DisplayOnlineOrders(pageData)
         UpdatePaginationControls()
     End Sub
-    
+
     Private Async Sub LoadOnlineOrders()
         ' Legacy method kept for compatibility
         Await LoadOnlineOrdersAsync()
@@ -198,7 +198,7 @@ Public Class OnlineOrdersForm
         If Integer.TryParse(txtPageNumber.Text, newPage) Then
             If newPage < 1 Then newPage = 1
             If newPage > totalPages Then newPage = totalPages
-            
+
             If newPage <> currentPage Then
                 currentPage = newPage
                 DisplayCurrentPage()
@@ -233,7 +233,7 @@ Public Class OnlineOrdersForm
     Private Sub DisplayOnlineOrders(orders As List(Of OnlineOrder))
         ' Panel2 is the scrollable content area for cards
         ' Panel1 is the fixed header with buttons (managed by Designer)
-        
+
         ' Keep only the template
         Dim controlsKeep As New List(Of Control)
         For Each ctrl As Control In Panel2.Controls
@@ -314,21 +314,21 @@ Public Class OnlineOrdersForm
         Dim lblTime As Label = CloneLabel(lblTime2)
         lblTime.Text = DateTime.Today.Add(order.OrderTime).ToString("h:mm tt")
 
-        ' Website Status Label (shows Pending/Confirmed/Cancelled)
+        ' Order Status Label
         Dim lblWebStatus As Label = New Label With {
-            .Text = If(String.IsNullOrEmpty(order.WebsiteStatus), "Pending", order.WebsiteStatus),
+            .Text = If(String.IsNullOrEmpty(order.OrderStatus), "Pending", order.OrderStatus),
             .Font = New Font("Segoe UI", 9, FontStyle.Bold),
-            .ForeColor = GetWebsiteStatusColor(order.WebsiteStatus),
+            .ForeColor = GetOrderStatusColor(order.OrderStatus),
             .Location = New Point(20, 250),
             .AutoSize = True
         }
-        
+
         ' Status Button (Button2 in template) - shows OrderStatus
         Dim btnStatus As Button = CloneButton(Button2)
         btnStatus.Text = order.OrderStatus
         btnStatus.BackColor = GetStatusColor(order.OrderStatus)
         btnStatus.ForeColor = Color.White
-        
+
         ' Icons
         Dim iconEmail As PictureBox = ClonePictureBox(PictureBox8)
         Dim iconPhone As PictureBox = ClonePictureBox(PictureBox3)
@@ -340,9 +340,9 @@ Public Class OnlineOrdersForm
         btnView.Text = "View Details"
         AddHandler btnView.Click, Sub(s, ev) ShowOrderDetails(order)
 
-        ' Confirm Order Button (only show if WebsiteStatus is Pending)
+        ' Confirm Order Button (only show if OrderStatus is Pending)
         Dim btnConfirm As Button = Nothing
-        If order.WebsiteStatus = "Pending" Then
+        If order.OrderStatus = "Pending" Then
             btnConfirm = CloneButton(Button3)
             btnConfirm.Text = "Confirm Order"
             btnConfirm.BackColor = Color.FromArgb(40, 167, 69) ' Green
@@ -369,62 +369,62 @@ Public Class OnlineOrdersForm
         Try
             ' Get items for the receipt
             Dim items As List(Of OrderItem) = orderRepository.GetOrderItems(order.OrderID)
-            
+
             ' Generate text content matching the image format
             Dim sb As New StringBuilder()
             Dim w As Integer = 60 ' Width for separators
             Dim line As String = New String("-"c, w)
             Dim dblLine As String = New String("="c, w)
-            
+
             sb.AppendLine(dblLine)
             sb.AppendLine(CenterText("TABEYA RESTAURANT", w))
             sb.AppendLine(CenterText("Official Sales Receipt", w))
             sb.AppendLine(dblLine)
             sb.AppendLine()
-            
+
             sb.AppendLine($"Order No.:   ORD-{order.OrderID:D4}")
             sb.AppendLine($"Date:        {DateTime.Now:yyyy-MM-dd}   |   Time: {DateTime.Now:HH:mm tt}")
             sb.AppendLine($"Cashier:     Online System")
             sb.AppendLine($"Customer:    {order.CustomerName}")
             sb.AppendLine()
-            
+
             sb.AppendLine(line)
             sb.AppendLine(CenterText("ITEMS PURCHASED", w))
             sb.AppendLine(line)
             sb.AppendLine()
-            
+
             Dim totalAmount As Decimal = 0
-            
+
             For Each item In items
                 Dim lineTotal As Decimal = item.UnitPrice * item.Quantity
                 totalAmount += lineTotal
-                
+
                 ' Format: 1 x Item Name ............. P 100.00
                 Dim itemStr As String = $"{item.Quantity} x {item.ProductName}"
                 Dim priceStr As String = $"P {lineTotal:N2}"
-                
+
                 ' padding calculation
                 Dim padding As Integer = w - itemStr.Length - priceStr.Length
                 If padding < 1 Then padding = 1
-                
+
                 sb.AppendLine($"{itemStr}{New String(" "c, padding)}{priceStr}")
-                
+
                 ' Add fake batch info to match image style (optional, but requested to look like image)
-                sb.AppendLine($"   - Batch: N/A") 
+                sb.AppendLine($"   - Batch: N/A")
                 sb.AppendLine($"   - Qty Deducted: {item.Quantity}")
                 sb.AppendLine()
             Next
-            
+
             sb.AppendLine(line)
             Dim subtotalStr As String = $"P {totalAmount:N2}"
             sb.AppendLine($"SUBTOTAL:{New String(" "c, w - 9 - subtotalStr.Length)}{subtotalStr}")
             sb.AppendLine(line)
-            
+
             Dim totalStr As String = $"P {totalAmount:N2}"
             sb.AppendLine($"TOTAL:{New String(" "c, w - 6 - totalStr.Length)}{totalStr}")
             sb.AppendLine(line)
             sb.AppendLine()
-            
+
             sb.AppendLine("Payment Method: ONLINE/PENDING")
             sb.AppendLine($"Amount Given:   P {totalAmount:N2}") ' Assuming exact payment for online
             sb.AppendLine($"Change:         P 0.00")
@@ -433,11 +433,11 @@ Public Class OnlineOrdersForm
             sb.AppendLine()
             sb.AppendLine(CenterText("THANK YOU FOR YOUR PURCHASE!", w))
             sb.AppendLine(dblLine)
-            
+
             ' Show Preview Form
             Dim previewForm As New ReceiptPreviewForm(order.OrderID, "OnlineOrder", sb.ToString())
             previewForm.ShowDialog()
-            
+
         Catch ex As Exception
             MessageBox.Show($"Error generating preview: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -505,7 +505,7 @@ Public Class OnlineOrdersForm
     ''' <summary>
     ''' Returns color based on website status
     ''' </summary>
-    Private Function GetWebsiteStatusColor(status As String) As Color
+    Private Function GetOrderStatusColor(status As String) As Color
         Select Case status.ToLower()
             Case "confirmed"
                 Return Color.FromArgb(40, 167, 69) ' Green
@@ -523,39 +523,24 @@ Public Class OnlineOrdersForm
     ''' </summary>
     Private Sub ConfirmOrder(order As OnlineOrder)
         Try
-            ' Update WebsiteStatus to Confirmed
-            Dim query As String = "UPDATE orders SET WebsiteStatus = 'Confirmed', OrderStatus = 'Preparing', UpdatedDate = NOW() WHERE OrderID = @orderID"
+            ' Update OrderStatus to Confirmed
+            Dim query As String = "UPDATE orders SET OrderStatus = 'Confirmed', UpdatedDate = NOW() WHERE OrderID = @orderID"
             Dim parameters As MySqlParameter() = {
                 New MySqlParameter("@orderID", order.OrderID)
             }
-            
+
             modDB.ExecuteNonQuery(query, parameters)
-            
-            ' Deduct inventory for the order
-            Dim inventoryDeducted As Boolean = False
-            Try
-                Dim items As List(Of OrderItem) = orderRepository.GetOrderItems(order.OrderID)
-                Dim inventoryService As New InventoryService()
-                inventoryDeducted = inventoryService.DeductInventoryForOrder(order.OrderID, items)
-            Catch invEx As Exception
-                System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for Order #{order.OrderID}: {invEx.Message}")
-            End Try
-            
-            ' Build success message with inventory confirmation
-            Dim successMessage As String = $"Order #{order.OrderID} has been confirmed and is now being prepared!" & vbCrLf & vbCrLf
-            
-            If inventoryDeducted Then
-                successMessage &= "✓ Inventory deducted successfully"
-            Else
-                successMessage &= "⚠ Warning: Inventory deduction may have failed"
-            End If
-            
-            MessageBox.Show(successMessage, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
-            
+
+            ' Calculate and update the PreparationTimeEstimate based on product PrepTime
+            orderRepository.UpdateOrderPreparationTime(order.OrderID)
+
+            MessageBox.Show($"Order #{order.OrderID} has been confirmed and is now being prepared!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
             ' Refresh the list
             currentPage = 1
             LoadOnlineOrders()
-            
+
+
         Catch ex As Exception
             MessageBox.Show($"Error confirming order: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -615,5 +600,9 @@ Public Class OnlineOrdersForm
 
     Private Sub FilterOrdersByStatus(status As String)
         ' Legacy method removed - replaced by DB filtering in LoadOnlineOrders
+    End Sub
+
+    Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Button3.Click
+
     End Sub
 End Class

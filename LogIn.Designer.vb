@@ -1,9 +1,9 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> _
+﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class LogIn
     Inherits System.Windows.Forms.Form
 
     'Form overrides dispose to clean up the component list.
-    <System.Diagnostics.DebuggerNonUserCode()> _
+    <System.Diagnostics.DebuggerNonUserCode()>
     Protected Overrides Sub Dispose(ByVal disposing As Boolean)
         Try
             If disposing AndAlso components IsNot Nothing Then
@@ -20,7 +20,7 @@ Partial Class LogIn
     'NOTE: The following procedure is required by the Windows Form Designer
     'It can be modified using the Windows Form Designer.  
     'Do not modify it using the code editor.
-    <System.Diagnostics.DebuggerStepThrough()> _
+    <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         TableLayoutPanel1 = New TableLayoutPanel()
         pnlHeader = New Panel()
@@ -184,7 +184,7 @@ Partial Class LogIn
         Label3.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label3.Location = New Point(27, 260)
         Label3.Name = "Label3"
-        Label3.Size = New Size(106, 23)
+        Label3.Size = New Size(80, 23)
         Label3.TabIndex = 6
         Label3.Text = "Password"
         ' 
@@ -194,7 +194,7 @@ Partial Class LogIn
         Label2.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label2.Location = New Point(27, 140)
         Label2.Name = "Label2"
-        Label2.Size = New Size(51, 23)
+        Label2.Size = New Size(87, 23)
         Label2.TabIndex = 4
         Label2.Text = "Username"
         ' 
@@ -210,13 +210,13 @@ Partial Class LogIn
         ' 
         ' txtPassword
         ' 
-        txtPassword.BorderStyle = BorderStyle.None
-        txtPassword.Font = New Font("Segoe UI", 12.0F)
-        txtPassword.Location = New Point(15, 11)
-        txtPassword.Name = "txtPassword"
-        txtPassword.Size = New Size(378, 27)
-        txtPassword.TabIndex = 4
-        txtPassword.UseSystemPasswordChar = True
+        EmployeeID.BorderStyle = BorderStyle.None
+        EmployeeID.Font = New Font("Segoe UI", 12.0F)
+        EmployeeID.Location = New Point(15, 11)
+        EmployeeID.Name = "EmployeeID"
+        EmployeeID.Size = New Size(378, 27)
+        EmployeeID.TabIndex = 4
+        EmployeeID.UseSystemPasswordChar = True
         ' 
         ' Panel4
         ' 
@@ -230,12 +230,12 @@ Partial Class LogIn
         ' 
         ' txtUsername
         ' 
-        txtUsername.BorderStyle = BorderStyle.None
-        txtUsername.Font = New Font("Segoe UI", 12.0F)
-        txtUsername.Location = New Point(15, 11)
-        txtUsername.Name = "txtUsername"
-        txtUsername.Size = New Size(378, 27)
-        txtUsername.TabIndex = 4
+        txtEmail.BorderStyle = BorderStyle.None
+        txtEmail.Font = New Font("Segoe UI", 12.0F)
+        txtEmail.Location = New Point(15, 11)
+        txtEmail.Name = "txtEmail"
+        txtEmail.Size = New Size(378, 27)
+        txtEmail.TabIndex = 4
         ' 
         ' lblSubHeader
         ' 
@@ -310,8 +310,7 @@ Partial Class LogIn
     Friend WithEvents Label3 As Label
     Friend WithEvents Label2 As Label
     Friend WithEvents Panel5 As Panel
-    Friend WithEvents txtPassword As TextBox
-    Friend WithEvents chkShowPassword As CheckBox
+    Friend WithEvents EmployeeID As TextBox
     Friend WithEvents btnLoginTimein As Button
     Friend WithEvents btnServerSettings As Button
     Friend WithEvents Panel6 As Panel

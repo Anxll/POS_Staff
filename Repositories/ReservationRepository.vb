@@ -49,7 +49,7 @@ Public Class ReservationRepository
     End Function
 
     Public Function GetTotalTodayReservationsCount() As Integer
-        Dim query As String = "SELECT COUNT(*) FROM reservations WHERE DATE(EventDate) = CURDATE() AND ReservationStatus IN ('Accepted', 'Confirmed')"
+        Dim query As String = "SELECT COUNT(*) FROM reservations WHERE DATE(EventDate) = CURDATE() AND ReservationStatus IN ('Confirmed', 'Completed')"
         Dim result As Object = modDB.ExecuteScalar(query)
         If result IsNot Nothing AndAlso IsNumeric(result) Then
             Return CInt(result)
@@ -132,26 +132,26 @@ Public Class ReservationRepository
             If newID IsNot Nothing AndAlso IsNumeric(newID) Then
                 Dim reservationID As Integer = CInt(newID)
 
-                ' Add reservation items
-                If reservation.Items IsNot Nothing Then
-                    For Each item In reservation.Items
-                        AddReservationItem(reservationID, item)
-                    Next
-                End If
+                For Each item In reservation.Items
+                    AddReservationItem(reservationID, item)
+                Next
 
-                ' **Deduct inventory ONLY if status is Confirmed or Accepted**
-                If reservation.ReservationStatus = "Confirmed" OrElse reservation.ReservationStatus = "Accepted" Then
-                    Try
-                        DeductInventoryForReservation(reservationID)
-                        System.Diagnostics.Debug.WriteLine($"Successfully deducted inventory for new Reservation #{reservationID}")
-                    Catch ex As Exception
-                        System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for new Reservation #{reservationID}: {ex.Message}")
-                        ' Don't fail the reservation creation, just log the error
-                    End Try
-                End If
-
-                Return reservationID
+                Next
             End If
+
+            ' **Deduct inventory ONLY if status is Confirmed or Accepted**
+            If reservation.ReservationStatus = "Confirmed" OrElse reservation.ReservationStatus = "Accepted" Then
+                Try
+                    DeductInventoryForReservation(reservationID)
+                    System.Diagnostics.Debug.WriteLine($"Successfully deducted inventory for new Reservation #{reservationID}")
+                Catch ex As Exception
+                    System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for new Reservation #{reservationID}: {ex.Message}")
+                    ' Don't fail the reservation creation, just log the error
+                End Try
+            End If
+
+            Return reservationID
+        End If
         End If
 
         Return 0
@@ -239,7 +239,7 @@ Public Class ReservationRepository
     End Sub
 
     Public Function GetTodayReservationsCount() As Integer
-        Dim query As String = "SELECT COUNT(*) FROM reservations WHERE DATE(EventDate) = CURDATE() AND ReservationStatus IN ('Accepted', 'Confirmed')"
+        Dim query As String = "SELECT COUNT(*) FROM reservations WHERE DATE(EventDate) = CURDATE() AND ReservationStatus = 'Confirmed'"
         Dim result As Object = modDB.ExecuteScalar(query)
         If result IsNot Nothing AndAlso IsNumeric(result) Then
             Return CInt(result)

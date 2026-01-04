@@ -13,8 +13,7 @@ Public Class OnlineOrder
     Public Property OrderTime As TimeSpan
     Public Property ItemsOrderedCount As Integer
     Public Property TotalAmount As Decimal
-    Public Property OrderStatus As String
-    Public Property WebsiteStatus As String ' Pending, Confirmed, Cancelled
+    Public Property OrderStatus As String ' Pending, Confirmed, Prepared, Completed, Cancelled
     Public Property Remarks As String
     Public Property DeliveryAddress As String
     Public Property SpecialRequests As String

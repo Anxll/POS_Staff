@@ -13,6 +13,7 @@ Public Class Order
     Public Property OrderStatus As String
     Public Property Remarks As String ' NEW: General notes
     Public Property PreparationTimeEstimate As Integer? ' Nullable in DB
+    Public Property CustomerName As String ' NEW: For display purposes
     
     ' Related data
     Public Property Items As List(Of OrderItem) ' Order line items

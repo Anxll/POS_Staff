@@ -318,6 +318,7 @@ Public Class ReservationsForm
         ' We create this programmatically since it might not be in the template yet
         Dim btnPreview As Button = CloneButton(Button4) ' Clone View Order button style
         btnPreview.Text = "Receipt Preview"
+        btnPreview.Font = New Font("Segoe UI", 7, FontStyle.Regular)
         btnPreview.BackColor = Color.FromArgb(224, 224, 224)
         btnPreview.ForeColor = Color.Black
         btnPreview.Location = New Point(178, 285) ' Position it next to View Order
