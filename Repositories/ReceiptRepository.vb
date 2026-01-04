@@ -10,7 +10,11 @@ Public Class ReceiptRepository
     ''' </summary>
     Public Function InsertReceiptHeader(orderID As Integer, orderNumber As String, totalAmount As Decimal,
                                        paymentMethod As String, amountGiven As Decimal, changeAmount As Decimal,
-                                       Optional cashierName As String = "POS Cashier") As Integer
+                                       orderDate As DateTime, orderTime As TimeSpan,
+                                       Optional cashierName As String = "POS Cashier",
+                                       Optional customerName As String = "Walk-in Customer",
+                                       Optional customerType As String = "Walk-in",
+                                       Optional orderSource As String = "POS") As Integer
         Try
             Dim query As String = "
                 INSERT INTO sales_receipts (
@@ -25,18 +29,18 @@ Public Class ReceiptRepository
 
             Dim parameters As MySqlParameter() = {
                 New MySqlParameter("@OrderNumber", orderNumber),
-                New MySqlParameter("@ReceiptDate", DateTime.Now.Date),
-                New MySqlParameter("@ReceiptTime", DateTime.Now.TimeOfDay),
+                New MySqlParameter("@ReceiptDate", orderDate.Date),
+                New MySqlParameter("@ReceiptTime", orderTime),
                 New MySqlParameter("@CashierName", cashierName),
-                New MySqlParameter("@CustomerName", "Walk-in Customer"),
-                New MySqlParameter("@CustomerType", "Walk-in"),
+                New MySqlParameter("@CustomerName", customerName),
+                New MySqlParameter("@CustomerType", customerType),
                 New MySqlParameter("@Subtotal", totalAmount),
                 New MySqlParameter("@TaxAmount", 0),
                 New MySqlParameter("@TotalAmount", totalAmount),
                 New MySqlParameter("@PaymentMethod", paymentMethod),
                 New MySqlParameter("@AmountGiven", amountGiven),
                 New MySqlParameter("@ChangeAmount", changeAmount),
-                New MySqlParameter("@OrderSource", "POS"),
+                New MySqlParameter("@OrderSource", orderSource),
                 New MySqlParameter("@TransactionStatus", "Completed"),
                 New MySqlParameter("@CreatedDate", DateTime.Now)
             }
@@ -126,6 +130,53 @@ Public Class ReceiptRepository
             Return "N/A"
         End Try
     End Function
+
+    ''' <summary>
+    ''' Records a payment entry into the payments table
+    ''' </summary>
+    Public Sub RecordPayment(orderID As Integer, reservationID As Integer?, amount As Decimal,
+                             paymentMethod As String, paymentSource As String,
+                             Optional transactionID As String = "",
+                             Optional notes As String = "")
+        Try
+            ' Validate PaymentMethod enum against DB ('Cash','GCash','COD')
+            ' Normalize common inputs
+            Dim normalizedMethod As String = "Cash"
+            If paymentMethod.ToUpper().Contains("GCASH") Then
+                normalizedMethod = "GCash"
+            ElseIf paymentMethod.ToUpper().Contains("COD") Then
+                normalizedMethod = "COD"
+            End If
+
+            ' Validate PaymentSource enum ('POS','Website')
+            Dim normalizedSource As String = If(paymentSource.ToUpper() = "WEBSITE", "Website", "POS")
+
+            Dim query As String = "
+                INSERT INTO payments (
+                    OrderID, ReservationID, PaymentDate, PaymentMethod, PaymentStatus, 
+                    AmountPaid, PaymentSource, TransactionID, Notes
+                ) VALUES (
+                    @OrderID, @ReservationID, @PaymentDate, @PaymentMethod, 'Completed', 
+                    @AmountPaid, @PaymentSource, @TransactionID, @Notes
+                )"
+
+            Dim parameters As MySqlParameter() = {
+                New MySqlParameter("@OrderID", orderID),
+                New MySqlParameter("@ReservationID", If(reservationID.HasValue, reservationID.Value, DBNull.Value)),
+                New MySqlParameter("@PaymentDate", DateTime.Now),
+                New MySqlParameter("@PaymentMethod", normalizedMethod),
+                New MySqlParameter("@AmountPaid", amount),
+                New MySqlParameter("@PaymentSource", normalizedSource),
+                New MySqlParameter("@TransactionID", If(String.IsNullOrEmpty(transactionID), DBNull.Value, transactionID)),
+                New MySqlParameter("@Notes", If(String.IsNullOrEmpty(notes), DBNull.Value, notes))
+            }
+
+            modDB.ExecuteNonQuery(query, parameters)
+        Catch ex As Exception
+            System.Diagnostics.Debug.WriteLine($"Error recording payment for Order #{orderID}: {ex.Message}")
+            ' We don't throw here to avoid failing the receipt generation if payment log fails
+        End Try
+    End Sub
 
     ''' <summary>
     ''' Gets complete receipt details for PDF generation

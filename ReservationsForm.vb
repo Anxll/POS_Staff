@@ -5,14 +5,17 @@ Imports System.Text
 
 Public Class ReservationsForm
     Private reservationRepository As New ReservationRepository()
+    Private cmbFilterStatus As ComboBox
+    Private txtSearch As TextBox
+    Private searchContainer As Panel
     Private isLoading As Boolean = False
-    
+
     ' Pagination variables
     Private currentPage As Integer = 1
     Private pageSize As Integer = 100 ' Updated to 100
     Private totalPages As Integer = 1
     Private totalRecords As Integer = 0
-    
+
     ' Pagination controls
     Private pnlPagination As Panel
     Private btnPrevPage As Button
@@ -21,16 +24,98 @@ Public Class ReservationsForm
     Private lblTotalPages As Label
 
     Private Async Sub ReservationsForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Enable double buffering for smoother scrolling
-        GetType(Control).GetProperty("DoubleBuffered", BindingFlags.NonPublic Or BindingFlags.Instance).SetValue(Panel1, True, Nothing)
+        ' Enable double buffering for smoother scrolling on the card container
+        GetType(Control).GetProperty("DoubleBuffered", BindingFlags.NonPublic Or BindingFlags.Instance).SetValue(Panel2, True, Nothing)
 
         ' Hide the template
         ResTemplate.Visible = False
-        
+
         ' Initialize pagination controls
         InitializePaginationControls()
-        
+
+        ' Create and add filter ComboBox
+        CreateFilterComboBox()
+
+        ' Create and add Search Box
+        CreateSearchBox()
+
         ' Load asynchronously
+        Await LoadReservationsAsync()
+    End Sub
+
+    ''' <summary>
+    ''' Creates the filter ComboBox
+    ''' </summary>
+    Private Sub CreateFilterComboBox()
+        cmbFilterStatus = New ComboBox With {
+            .Location = New Point(550, 32),
+            .Size = New Size(180, 30),
+            .DropDownStyle = ComboBoxStyle.DropDownList,
+            .Font = New Font("Segoe UI", 10)
+        }
+
+        cmbFilterStatus.Items.AddRange({"All Orders", "Pending", "Confirmed", "Completed", "Cancelled"})
+        cmbFilterStatus.SelectedIndex = 0
+
+        AddHandler cmbFilterStatus.SelectedIndexChanged, AddressOf cmbFilterStatus_SelectedIndexChanged
+
+        Panel1.Controls.Add(cmbFilterStatus)
+    End Sub
+
+    Private Sub CreateSearchBox()
+        ' Label "Search:"
+        Dim lblSearchTitle As New Label With {
+            .Text = "Search:",
+            .Font = New Font("Segoe UI", 11, FontStyle.Bold),
+            .Location = New Point(10, 36),
+            .AutoSize = True,
+            .ForeColor = Color.Black
+        }
+
+        ' Search Container Panel (Themed)
+        searchContainer = New Panel With {
+            .Location = New Point(85, 28),
+            .Size = New Size(450, 42),
+            .BackColor = Color.White,
+            .BorderStyle = BorderStyle.FixedSingle
+        }
+
+        ' Search TextBox
+        txtSearch = New TextBox With {
+            .Location = New Point(10, 8),
+            .Size = New Size(430, 25),
+            .BorderStyle = BorderStyle.None,
+            .Font = New Font("Segoe UI", 11),
+            .PlaceholderText = "Search by name"
+        }
+
+        AddHandler txtSearch.TextChanged, AddressOf txtSearch_TextChanged
+
+        searchContainer.Controls.Add(txtSearch)
+        Panel1.Controls.AddRange({lblSearchTitle, searchContainer})
+        searchContainer.BringToFront()
+    End Sub
+
+    Private searchTimer As Timer
+    Private Sub txtSearch_TextChanged(sender As Object, e As EventArgs)
+        ' Simple debounce to avoid too many DB calls
+        If searchTimer Is Nothing Then
+            searchTimer = New Timer()
+            searchTimer.Interval = 500 ' 500ms delay
+            AddHandler searchTimer.Tick, AddressOf OnSearchTimerTick
+        End If
+        searchTimer.Stop()
+        searchTimer.Start()
+    End Sub
+
+    Private Async Sub OnSearchTimerTick(sender As Object, e As EventArgs)
+        searchTimer.Stop()
+        currentPage = 1 ' Reset to first page on search
+        Await LoadReservationsAsync()
+    End Sub
+
+    Private Async Sub cmbFilterStatus_SelectedIndexChanged(sender As Object, e As EventArgs)
+        currentPage = 1
         Await LoadReservationsAsync()
     End Sub
 
@@ -41,7 +126,7 @@ Public Class ReservationsForm
             .Dock = DockStyle.Bottom,
             .BackColor = Color.WhiteSmoke
         }
-        
+
         ' Previous Button
         btnPrevPage = New Button With {
             .Text = "< Previous",
@@ -52,7 +137,7 @@ Public Class ReservationsForm
             .Font = New Font("Segoe UI", 9)
         }
         AddHandler btnPrevPage.Click, AddressOf btnPrevPage_Click
-        
+
         ' Next Button
         btnNextPage = New Button With {
             .Text = "Next >",
@@ -63,7 +148,7 @@ Public Class ReservationsForm
             .Font = New Font("Segoe UI", 9)
         }
         AddHandler btnNextPage.Click, AddressOf btnNextPage_Click
-        
+
         ' Page Number TextBox (Editable)
         txtPageNumber = New TextBox With {
             .Text = "1",
@@ -84,61 +169,72 @@ Public Class ReservationsForm
             .Font = New Font("Segoe UI", 10, FontStyle.Bold),
             .Location = New Point(txtPageNumber.Right + 5, 8)
         }
-        
+
         ' Add Resize Handler to keep buttons in place
         AddHandler pnlPagination.Resize, Sub(s, ev)
                                              btnNextPage.Location = New Point(pnlPagination.Width - 120, 8)
                                              txtPageNumber.Location = New Point((pnlPagination.Width - 120) \ 2, 8)
                                              lblTotalPages.Location = New Point(txtPageNumber.Right + 5, 8)
                                          End Sub
-        
+
         pnlPagination.Controls.AddRange({btnPrevPage, btnNextPage, txtPageNumber, lblTotalPages})
         Me.Controls.Add(pnlPagination)
         pnlPagination.BringToFront()
-        
-        ' Adjust Panel1 to not overlap with pagination
-        Panel1.Height -= pnlPagination.Height
     End Sub
 
     ' Database-level pagination - NO client-side buffer
-    
+
     Private Async Function LoadReservationsAsync() As Task
         If isLoading Then Return
         isLoading = True
-        
+
         Try
+            Dim selectedStatus As String = "All Orders"
+            If cmbFilterStatus IsNot Nothing AndAlso cmbFilterStatus.SelectedItem IsNot Nothing Then
+                selectedStatus = cmbFilterStatus.SelectedItem.ToString()
+            End If
+
+            Dim searchQuery As String = If(txtSearch IsNot Nothing, txtSearch.Text.Trim(), "")
+
             ' Get total count first (fast query)
             Await Task.Run(Sub()
-                               totalRecords = reservationRepository.GetTotalReservationsCount()
+                               totalRecords = reservationRepository.GetTotalReservationsCount(selectedStatus, searchQuery)
                            End Sub)
-            
+
             ' Calculate pagination
             totalPages = Math.Max(1, CInt(Math.Ceiling(totalRecords / pageSize)))
-            
+
             If currentPage > totalPages Then currentPage = totalPages
             If currentPage < 1 Then currentPage = 1
-            
+
             ' Load only current page from database
             Await LoadCurrentPageFromDatabase()
-            
+
             ' Show pagination controls
             If pnlPagination IsNot Nothing Then pnlPagination.Visible = True
-            
+
         Catch ex As Exception
             MessageBox.Show($"Error loading reservations: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         Finally
             isLoading = False
         End Try
     End Function
-    
+
     Private Async Function LoadCurrentPageFromDatabase() As Task
         Dim offset As Integer = (currentPage - 1) * pageSize
         Dim pageData As List(Of Reservation) = Nothing
-        
+
+        Dim selectedStatus As String = "All Orders"
+        If cmbFilterStatus IsNot Nothing AndAlso cmbFilterStatus.SelectedItem IsNot Nothing Then
+            selectedStatus = cmbFilterStatus.SelectedItem.ToString()
+        End If
+
+        Dim searchQuery As String = If(txtSearch IsNot Nothing, txtSearch.Text.Trim(), "")
+
         Await Task.Run(Sub()
-                           pageData = reservationRepository.GetAllReservationsPaged(pageSize, offset)
+                           pageData = reservationRepository.GetAllReservationsPaged(pageSize, offset, selectedStatus, searchQuery)
                        End Sub)
-        
+
         DisplayReservations(pageData)
         UpdatePaginationControls()
     End Function
@@ -171,7 +267,7 @@ Public Class ReservationsForm
         If Integer.TryParse(txtPageNumber.Text, newPage) Then
             If newPage < 1 Then newPage = 1
             If newPage > totalPages Then newPage = totalPages
-            
+
             If newPage <> currentPage Then
                 currentPage = newPage
                 DisplayCurrentPage()
@@ -182,7 +278,7 @@ Public Class ReservationsForm
             txtPageNumber.Text = currentPage.ToString()
         End If
     End Sub
-    
+
     Private Sub btnPrevPage_Click(sender As Object, e As EventArgs)
         If currentPage > 1 Then
             currentPage -= 1
@@ -205,7 +301,7 @@ Public Class ReservationsForm
     Private Sub DisplayReservations(reservations As List(Of Reservation))
         ' Panel2 is the scrollable content area for cards
         ' Panel1 is the fixed header with buttons (managed by Designer)
-        
+
         ' Keep only the template
         Dim controlsKeep As New List(Of Control)
         For Each ctrl As Control In Panel2.Controls
@@ -220,6 +316,18 @@ Public Class ReservationsForm
         For Each ctrl In controlsKeep
             Panel2.Controls.Add(ctrl)
         Next
+
+        If reservations Is Nothing OrElse reservations.Count = 0 Then
+            Dim lblEmpty As New Label With {
+                .Text = "No reservations found",
+                .Font = New Font("Segoe UI", 14, FontStyle.Italic),
+                .ForeColor = Color.Gray,
+                .Dock = DockStyle.Fill,
+                .TextAlign = ContentAlignment.MiddleCenter
+            }
+            Panel2.Controls.Add(lblEmpty)
+            Return
+        End If
 
         Dim xPos As Integer = 38
         Dim yPos As Integer = 20  ' Start closer to top since Panel2 is just for cards
@@ -281,14 +389,20 @@ Public Class ReservationsForm
         Dim btnStatus As Button = CloneButton(Button3)
         btnStatus.Text = res.ReservationStatus
 
-        ' Set status color - Confirmed and Accepted both show green
-        If res.ReservationStatus = "Confirmed" OrElse res.ReservationStatus = "Accepted" Then
-            btnStatus.ForeColor = Color.FromArgb(0, 200, 83)
-        ElseIf res.ReservationStatus = "Pending" Then
-            btnStatus.ForeColor = Color.Orange
-        Else
-            btnStatus.ForeColor = Color.Red
-        End If
+        ' Set status color
+        Dim statusLower As String = If(res.ReservationStatus IsNot Nothing, res.ReservationStatus.ToLower(), "")
+        Select Case statusLower
+            Case "pending"
+                btnStatus.ForeColor = Color.FromArgb(255, 127, 39) ' Orange
+            Case "confirmed", "accepted"
+                btnStatus.ForeColor = Color.FromArgb(52, 152, 219) ' Blue
+            Case "completed"
+                btnStatus.ForeColor = Color.FromArgb(0, 200, 83) ' Green
+            Case "cancelled"
+                btnStatus.ForeColor = Color.Red
+            Case Else
+                btnStatus.ForeColor = Color.Gray
+        End Select
 
         ' Clone icons
         Dim iconEmail As PictureBox = ClonePictureBox(PictureBox8)
@@ -314,20 +428,21 @@ Public Class ReservationsForm
                                        End Sub
         panel.Controls.Add(btnViewOrder)
 
-        ' Add Receipt Preview button (New Feature)
-        ' We create this programmatically since it might not be in the template yet
-        Dim btnPreview As Button = CloneButton(Button4) ' Clone View Order button style
-        btnPreview.Text = "Receipt Preview"
-        btnPreview.Font = New Font("Segoe UI", 7, FontStyle.Regular)
-        btnPreview.BackColor = Color.FromArgb(224, 224, 224)
-        btnPreview.ForeColor = Color.Black
-        btnPreview.Location = New Point(178, 285) ' Position it next to View Order
-        btnPreview.Size = New Size(104, 38)
-        
-        AddHandler btnPreview.Click, Sub(sender, e)
-                                         ShowReceiptPreview(res)
-                                     End Sub
-        panel.Controls.Add(btnPreview)
+        ' Add Receipt Preview button - Only for Confirmed or Accepted status
+        If res.ReservationStatus = "Confirmed" OrElse res.ReservationStatus = "Accepted" Then
+            Dim btnPreview As Button = CloneButton(Button4) ' Clone View Order button style
+            btnPreview.Text = "Receipt Preview"
+            btnPreview.Font = New Font("Segoe UI", 7, FontStyle.Regular)
+            btnPreview.BackColor = Color.FromArgb(224, 224, 224)
+            btnPreview.ForeColor = Color.Black
+            btnPreview.Location = New Point(178, 285) ' Position it next to View Order
+            btnPreview.Size = New Size(104, 38)
+            
+            AddHandler btnPreview.Click, Sub(sender, e)
+                                             ShowReceiptPreview(res)
+                                         End Sub
+            panel.Controls.Add(btnPreview)
+        End If
 
         Return panel
     End Function
@@ -352,7 +467,7 @@ Public Class ReservationsForm
             sb.AppendLine($"Order No.:   RES-{res.ReservationID:D3}")
             ' Use Event Date/Time or current datestamp? Usually a receipt has the print date. 
             ' But keeping Event info is useful. Let's stick to the image style: Date | Time
-            sb.AppendLine($"Date:        {DateTime.Now:yyyy-MM-dd}   |   Time: {DateTime.Now:HH:mm tt}")
+            sb.AppendLine($"Date:        {res.EventDate:yyyy-MM-dd}   |   Time: {DateTime.Today.Add(res.EventTime):h:mm tt}")
             sb.AppendLine($"Cashier:     Reservation System")
             sb.AppendLine($"Customer:    {res.CustomerName}")
             sb.AppendLine()

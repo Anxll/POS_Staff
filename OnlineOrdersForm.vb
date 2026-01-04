@@ -5,6 +5,8 @@ Imports MySql.Data.MySqlClient
 Public Class OnlineOrdersForm
     Private orderRepository As New OrderRepository()
     Private cmbFilterStatus As ComboBox
+    Private txtSearch As TextBox
+    Private searchContainer As Panel
     Private isLoading As Boolean = False
 
     ' Pagination variables
@@ -32,6 +34,9 @@ Public Class OnlineOrdersForm
 
         ' Create and add filter ComboBox
         CreateFilterComboBox()
+
+        ' Create and add Search Box
+        CreateSearchBox()
 
         ' Load asynchronously
         Await LoadOnlineOrdersAsync()
@@ -98,9 +103,6 @@ Public Class OnlineOrdersForm
         pnlPagination.Controls.AddRange({btnPrevPage, btnNextPage, txtPageNumber, lblTotalPages})
         Me.Controls.Add(pnlPagination)
         pnlPagination.BringToFront()
-
-        ' Adjust Panel1 to not overlap with pagination
-        Panel1.Height -= pnlPagination.Height
     End Sub
 
     ''' <summary>
@@ -108,13 +110,13 @@ Public Class OnlineOrdersForm
     ''' </summary>
     Private Sub CreateFilterComboBox()
         cmbFilterStatus = New ComboBox With {
-            .Location = New Point(1100, 38),
-            .Size = New Size(200, 30),
+            .Location = New Point(550, 32),
+            .Size = New Size(180, 30),
             .DropDownStyle = ComboBoxStyle.DropDownList,
             .Font = New Font("Segoe UI", 10)
         }
 
-        cmbFilterStatus.Items.AddRange({"All Orders", "Preparing", "Served", "Completed", "Cancelled"})
+        cmbFilterStatus.Items.AddRange({"All Orders", "Pending", "Confirmed", "Completed", "Cancelled"})
         cmbFilterStatus.SelectedIndex = 0
 
         AddHandler cmbFilterStatus.SelectedIndexChanged, AddressOf cmbFilterStatus_SelectedIndexChanged
@@ -122,36 +124,94 @@ Public Class OnlineOrdersForm
         Panel1.Controls.Add(cmbFilterStatus)
     End Sub
 
+    Private Sub CreateSearchBox()
+        ' Label "Search:"
+        Dim lblSearchTitle As New Label With {
+            .Text = "Search:",
+            .Font = New Font("Segoe UI", 11, FontStyle.Bold),
+            .Location = New Point(10, 36),
+            .AutoSize = True,
+            .ForeColor = Color.Black
+        }
+
+        ' Search Container Panel (Themed)
+        searchContainer = New Panel With {
+            .Location = New Point(85, 28),
+            .Size = New Size(450, 42),
+            .BackColor = Color.White,
+            .BorderStyle = BorderStyle.FixedSingle
+        }
+
+        ' Search TextBox
+        txtSearch = New TextBox With {
+            .Location = New Point(10, 8),
+            .Size = New Size(430, 25),
+            .BorderStyle = BorderStyle.None,
+            .Font = New Font("Segoe UI", 11),
+            .PlaceholderText = "Search by name"
+        }
+
+        AddHandler txtSearch.TextChanged, AddressOf txtSearch_TextChanged
+
+        searchContainer.Controls.Add(txtSearch)
+        Panel1.Controls.AddRange({lblSearchTitle, searchContainer})
+        searchContainer.BringToFront()
+    End Sub
+
+    Private searchTimer As Timer
+    Private Sub txtSearch_TextChanged(sender As Object, e As EventArgs)
+        ' Simple debounce
+        If searchTimer Is Nothing Then
+            searchTimer = New Timer()
+            searchTimer.Interval = 500
+            AddHandler searchTimer.Tick, AddressOf OnSearchTimerTick
+        End If
+        searchTimer.Stop()
+        searchTimer.Start()
+    End Sub
+
+    Private Async Sub OnSearchTimerTick(sender As Object, e As EventArgs)
+        searchTimer.Stop()
+        currentPage = 1
+        Await LoadOnlineOrdersAsync()
+    End Sub
+
+    Private Async Sub cmbFilterStatus_SelectedIndexChanged(sender As Object, e As EventArgs)
+        currentPage = 1
+        Await LoadOnlineOrdersAsync()
+    End Sub
+
     ''' <summary>
     ''' Loads all online orders from the database and displays them asynchronously
     ''' </summary>
-    ' Buffer for client-side pagination
-    Private allOrders As New List(Of OnlineOrder)()
-
     Private Async Function LoadOnlineOrdersAsync() As Task
         If isLoading Then Return
         isLoading = True
 
         Try
             Dim selectedStatus As String = "All Orders"
-            If cmbFilterStatus.SelectedItem IsNot Nothing Then
+            If cmbFilterStatus IsNot Nothing AndAlso cmbFilterStatus.SelectedItem IsNot Nothing Then
                 selectedStatus = cmbFilterStatus.SelectedItem.ToString()
             End If
 
-            ' Load all into buffer (Background)
-            Await Task.Run(Sub()
-                               allOrders = orderRepository.GetOnlineOrdersPaged(0, 0, selectedStatus)
-                           End Sub)
+            Dim searchQuery As String = If(txtSearch IsNot Nothing, txtSearch.Text.Trim(), "")
 
+            ' Get total count first (Database-level)
+            totalRecords = Await orderRepository.GetTotalOnlineOrdersCountAsync(selectedStatus, searchQuery)
+            
             ' Calculate pagination
-            totalRecords = allOrders.Count
             totalPages = Math.Max(1, CInt(Math.Ceiling(totalRecords / pageSize)))
 
             If currentPage > totalPages Then currentPage = totalPages
             If currentPage < 1 Then currentPage = 1
 
-            ' Display first page
-            DisplayCurrentPage()
+            ' Load only current page from database
+            Dim offset As Integer = (currentPage - 1) * pageSize
+            Dim pageData As List(Of OnlineOrder) = Await orderRepository.GetOnlineOrdersPagedAsync(pageSize, offset, selectedStatus, searchQuery)
+            
+            ' Display data
+            DisplayOnlineOrders(pageData)
+            UpdatePaginationControls()
 
             ' Show pagination controls
             If pnlPagination IsNot Nothing Then pnlPagination.Visible = True
@@ -163,11 +223,10 @@ Public Class OnlineOrdersForm
         End Try
     End Function
 
-    Private Sub DisplayCurrentPage()
-        ' Slice the buffer
-        Dim pageData = allOrders.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList()
-        DisplayOnlineOrders(pageData)
-        UpdatePaginationControls()
+    Private Async Sub DisplayCurrentPage()
+        ' This is now handled directly by LoadOnlineOrdersAsync calling LoadOnlineOrdersPagedFromDatabase or equivalent
+        ' but for compatibility with btn hooks:
+        Await LoadOnlineOrdersAsync()
     End Sub
 
     Private Async Sub LoadOnlineOrders()
@@ -254,8 +313,8 @@ Public Class OnlineOrdersForm
                 .Text = "No online orders found",
                 .Font = New Font("Segoe UI", 14, FontStyle.Italic),
                 .ForeColor = Color.Gray,
-                .Location = New Point(600, 300),
-                .AutoSize = True
+                .Dock = DockStyle.Fill,
+                .TextAlign = ContentAlignment.MiddleCenter
             }
             Panel2.Controls.Add(lblEmpty)
             Return
@@ -348,8 +407,8 @@ Public Class OnlineOrdersForm
             btnConfirm.BackColor = Color.FromArgb(40, 167, 69) ' Green
             btnConfirm.ForeColor = Color.White
             AddHandler btnConfirm.Click, Sub(s, ev) ConfirmOrder(order)
-        Else
-            ' Receipt Preview Button (only show if not Pending)
+        ElseIf order.OrderStatus = "Confirmed" Then
+            ' Receipt Preview Button (ONLY show if status is Confirmed)
             Dim btnPreview As Button = CloneButton(Button3)
             btnPreview.Text = "Receipt Preview"
             AddHandler btnPreview.Click, Sub(s, ev) ShowReceiptPreview(order)
@@ -359,8 +418,12 @@ Public Class OnlineOrdersForm
         ' Add controls to panel
         panel.Controls.AddRange({
             lblName, lblCode, iconEmail, lblEmailClone, iconPhone, lblPhone,
-            iconDate, lblDate, iconTime, lblTime, lblWebStatus, btnStatus, btnView, btnConfirm
+            iconDate, lblDate, iconTime, lblTime, lblWebStatus, btnStatus, btnView
         })
+        
+        If btnConfirm IsNot Nothing Then
+            panel.Controls.Add(btnConfirm)
+        End If
 
         Return panel
     End Function
@@ -383,7 +446,7 @@ Public Class OnlineOrdersForm
             sb.AppendLine()
 
             sb.AppendLine($"Order No.:   ORD-{order.OrderID:D4}")
-            sb.AppendLine($"Date:        {DateTime.Now:yyyy-MM-dd}   |   Time: {DateTime.Now:HH:mm tt}")
+            sb.AppendLine($"Date:        {order.OrderDate:yyyy-MM-dd}   |   Time: {DateTime.Today.Add(order.OrderTime):h:mm tt}")
             sb.AppendLine($"Cashier:     Online System")
             sb.AppendLine($"Customer:    {order.CustomerName}")
             sb.AppendLine()
@@ -488,15 +551,18 @@ Public Class OnlineOrdersForm
     ''' Returns color based on order status
     ''' </summary>
     Private Function GetStatusColor(status As String) As Color
+        If status Is Nothing Then Return Color.Gray
         Select Case status.ToLower()
-            Case "preparing"
+            Case "pending"
                 Return Color.FromArgb(255, 127, 39) ' Orange
-            Case "served"
-                Return Color.FromArgb(40, 167, 69) ' Green
-            Case "completed"
+            Case "confirmed"
+                Return Color.FromArgb(52, 152, 219) ' Blue
+            Case "completed", "served"
                 Return Color.FromArgb(40, 167, 69) ' Green
             Case "cancelled"
                 Return Color.FromArgb(220, 53, 69) ' Red
+            Case "preparing"
+                Return Color.FromArgb(255, 193, 7) ' Yellow
             Case Else
                 Return Color.Gray
         End Select
@@ -506,16 +572,7 @@ Public Class OnlineOrdersForm
     ''' Returns color based on website status
     ''' </summary>
     Private Function GetOrderStatusColor(status As String) As Color
-        Select Case status.ToLower()
-            Case "confirmed"
-                Return Color.FromArgb(40, 167, 69) ' Green
-            Case "cancelled"
-                Return Color.FromArgb(220, 53, 69) ' Red
-            Case "pending", ""
-                Return Color.FromArgb(255, 127, 39) ' Orange
-            Case Else
-                Return Color.Gray
-        End Select
+        Return GetStatusColor(status)
     End Function
 
     ''' <summary>
@@ -590,13 +647,7 @@ Public Class OnlineOrdersForm
         LoadOnlineOrders()
     End Sub
 
-    ''' <summary>
-    ''' Filter by status
-    ''' </summary>
-    Private Sub cmbFilterStatus_SelectedIndexChanged(sender As Object, e As EventArgs)
-        currentPage = 1
-        LoadOnlineOrders()
-    End Sub
+
 
     Private Sub FilterOrdersByStatus(status As String)
         ' Legacy method removed - replaced by DB filtering in LoadOnlineOrders

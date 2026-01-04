@@ -5,4 +5,5 @@ Public Class ReservationItem
     Public Property Quantity As Integer
     Public Property UnitPrice As Decimal
     Public Property TotalPrice As Decimal
+    Public Property ProductID As Integer
 End Class

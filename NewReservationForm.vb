@@ -16,6 +16,12 @@ Public Class NewReservationForm
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
         ' Open ReservationSelectOrder form to select items
         Dim selectOrderForm As New ReservationSelectOrder()
+        
+        ' Pass existing items to the order form
+        If SelectedItems IsNot Nothing AndAlso SelectedItems.Count > 0 Then
+            selectOrderForm.SetPreSelectedItems(SelectedItems)
+        End If
+
         If selectOrderForm.ShowDialog() = DialogResult.OK Then
             ' Get selected items from the order form
             SelectedItems = selectOrderForm.GetSelectedItems()
@@ -24,6 +30,9 @@ Public Class NewReservationForm
             If SelectedItems.Count > 0 Then
                 Button1.Text = $"Selected ({SelectedItems.Count} items)"
                 Button1.BackColor = Color.FromArgb(0, 200, 83) ' Green to indicate selected
+            Else
+                Button1.Text = "Select Order Items"
+                Button1.BackColor = Color.WhiteSmoke
             End If
         End If
     End Sub

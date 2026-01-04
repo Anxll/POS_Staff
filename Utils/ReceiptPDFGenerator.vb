@@ -96,7 +96,7 @@ Public Class ReceiptPDFGenerator
 
         ' Order details
         yPos = DrawText(gfx, $"Order No.:  {data.OrderNumber}", yPos, fontRegular)
-        yPos = DrawText(gfx, $"Date:       {data.ReceiptDate:yyyy-MM-dd}  |  Time: {data.ReceiptTime:hh\:mm} {If(data.ReceiptTime.Hours >= 12, "PM", "AM")}", yPos, fontRegular)
+        yPos = DrawText(gfx, $"Date:       {data.ReceiptDate:yyyy-MM-dd}  |  Time: {DateTime.Today.Add(data.ReceiptTime):h:mm tt}", yPos, fontRegular)
         yPos = DrawText(gfx, $"Cashier:    {data.CashierName}", yPos, fontRegular)
         yPos = DrawText(gfx, $"Customer:   {data.CustomerName}", yPos, fontRegular)
         yPos += 5

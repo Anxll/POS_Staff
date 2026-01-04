@@ -152,7 +152,7 @@ Partial Class ReservationSelectOrder
         lblSubHeader.Name = "lblSubHeader"
         lblSubHeader.Size = New Size(292, 23)
         lblSubHeader.TabIndex = 1
-        lblSubHeader.Text = "Create new dine-in or takeout orders"
+        lblSubHeader.Text = "Select items for the reservation"
         ' 
         ' lblHeader
         ' 
@@ -782,6 +782,7 @@ Partial Class ReservationSelectOrder
         btnDineIn.TabIndex = 19
         btnDineIn.Text = "Dine-In"
         btnDineIn.UseVisualStyleBackColor = False
+        btnDineIn.Visible = False
         ' 
         ' btnTakeOut
         ' 
@@ -795,6 +796,7 @@ Partial Class ReservationSelectOrder
         btnTakeOut.TabIndex = 20
         btnTakeOut.Text = "Takeout"
         btnTakeOut.UseVisualStyleBackColor = False
+        btnTakeOut.Visible = False
         ' 
         ' btnContinue
         ' 

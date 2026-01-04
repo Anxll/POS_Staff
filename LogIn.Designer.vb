@@ -1,9 +1,9 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> _
+﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class LogIn
     Inherits System.Windows.Forms.Form
 
     'Form overrides dispose to clean up the component list.
-    <System.Diagnostics.DebuggerNonUserCode()> _
+    <System.Diagnostics.DebuggerNonUserCode()>
     Protected Overrides Sub Dispose(ByVal disposing As Boolean)
         Try
             If disposing AndAlso components IsNot Nothing Then
@@ -20,7 +20,7 @@ Partial Class LogIn
     'NOTE: The following procedure is required by the Windows Form Designer
     'It can be modified using the Windows Form Designer.  
     'Do not modify it using the code editor.
-    <System.Diagnostics.DebuggerStepThrough()> _
+    <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         TableLayoutPanel1 = New TableLayoutPanel()
         pnlHeader = New Panel()
@@ -31,6 +31,7 @@ Partial Class LogIn
         Panel3 = New Panel()
         btnServerSettings = New Button()
         btnLoginTimein = New Button()
+        chkShowPassword = New CheckBox()
         Label3 = New Label()
         Label2 = New Label()
         Panel5 = New Panel()
@@ -54,7 +55,7 @@ Partial Class LogIn
         ' TableLayoutPanel1
         ' 
         TableLayoutPanel1.ColumnCount = 1
-        TableLayoutPanel1.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100F))
+        TableLayoutPanel1.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100.0F))
         TableLayoutPanel1.Controls.Add(pnlHeader, 0, 0)
         TableLayoutPanel1.Controls.Add(Panel2, 0, 1)
         TableLayoutPanel1.Dock = DockStyle.Fill
@@ -62,8 +63,8 @@ Partial Class LogIn
         TableLayoutPanel1.Margin = New Padding(0)
         TableLayoutPanel1.Name = "TableLayoutPanel1"
         TableLayoutPanel1.RowCount = 2
-        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Absolute, 88F))
-        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Percent, 100F))
+        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Absolute, 88.0F))
+        TableLayoutPanel1.RowStyles.Add(New RowStyle(SizeType.Percent, 100.0F))
         TableLayoutPanel1.Size = New Size(1280, 720)
         TableLayoutPanel1.TabIndex = 0
         ' 
@@ -93,7 +94,7 @@ Partial Class LogIn
         ' 
         lblHeaderTitle.Anchor = AnchorStyles.None
         lblHeaderTitle.AutoSize = True
-        lblHeaderTitle.Font = New Font("Segoe UI Semibold", 14F, FontStyle.Bold)
+        lblHeaderTitle.Font = New Font("Segoe UI Semibold", 14.0F, FontStyle.Bold)
         lblHeaderTitle.ForeColor = SystemColors.Window
         lblHeaderTitle.Location = New Point(594, 15)
         lblHeaderTitle.Name = "lblHeaderTitle"
@@ -131,6 +132,7 @@ Partial Class LogIn
         Panel3.BorderStyle = BorderStyle.FixedSingle
         Panel3.Controls.Add(btnServerSettings)
         Panel3.Controls.Add(btnLoginTimein)
+        Panel3.Controls.Add(chkShowPassword)
         Panel3.Controls.Add(Label3)
         Panel3.Controls.Add(Label2)
         Panel3.Controls.Add(Panel5)
@@ -165,10 +167,21 @@ Partial Class LogIn
         btnLoginTimein.Text = "Login/Time-In"
         btnLoginTimein.UseVisualStyleBackColor = False
         ' 
+        ' chkShowPassword
+        ' 
+        chkShowPassword.AutoSize = True
+        chkShowPassword.Font = New Font("Segoe UI", 9.0F)
+        chkShowPassword.Location = New Point(40, 350)
+        chkShowPassword.Name = "chkShowPassword"
+        chkShowPassword.Size = New Size(129, 24)
+        chkShowPassword.TabIndex = 6
+        chkShowPassword.Text = "Show Password"
+        chkShowPassword.UseVisualStyleBackColor = True
+        ' 
         ' Label3
         ' 
         Label3.AutoSize = True
-        Label3.Font = New Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label3.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label3.Location = New Point(27, 260)
         Label3.Name = "Label3"
         Label3.Size = New Size(80, 23)
@@ -178,7 +191,7 @@ Partial Class LogIn
         ' Label2
         ' 
         Label2.AutoSize = True
-        Label2.Font = New Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label2.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label2.Location = New Point(27, 140)
         Label2.Name = "Label2"
         Label2.Size = New Size(87, 23)
@@ -198,7 +211,7 @@ Partial Class LogIn
         ' txtPassword
         ' 
         txtPassword.BorderStyle = BorderStyle.None
-        txtPassword.Font = New Font("Segoe UI", 12F)
+        txtPassword.Font = New Font("Segoe UI", 12.0F)
         txtPassword.Location = New Point(15, 11)
         txtPassword.Name = "txtPassword"
         txtPassword.Size = New Size(378, 27)
@@ -218,7 +231,7 @@ Partial Class LogIn
         ' txtUsername
         ' 
         txtUsername.BorderStyle = BorderStyle.None
-        txtUsername.Font = New Font("Segoe UI", 12F)
+        txtUsername.Font = New Font("Segoe UI", 12.0F)
         txtUsername.Location = New Point(15, 11)
         txtUsername.Name = "txtUsername"
         txtUsername.Size = New Size(378, 27)
@@ -227,7 +240,7 @@ Partial Class LogIn
         ' lblSubHeader
         ' 
         lblSubHeader.AutoSize = True
-        lblSubHeader.Font = New Font("Segoe UI", 8F)
+        lblSubHeader.Font = New Font("Segoe UI", 8.0F)
         lblSubHeader.ForeColor = Color.FromArgb(CByte(85), CByte(85), CByte(85))
         lblSubHeader.Location = New Point(175, 85)
         lblSubHeader.Margin = New Padding(0)
@@ -239,7 +252,7 @@ Partial Class LogIn
         ' Label1
         ' 
         Label1.AutoSize = True
-        Label1.Font = New Font("Segoe UI Semibold", 14F, FontStyle.Bold)
+        Label1.Font = New Font("Segoe UI Semibold", 14.0F, FontStyle.Bold)
         Label1.ForeColor = Color.Black
         Label1.Location = New Point(211, 51)
         Label1.Name = "Label1"
@@ -258,7 +271,7 @@ Partial Class LogIn
         ' 
         ' LogIn
         ' 
-        AutoScaleDimensions = New SizeF(8F, 20F)
+        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(1280, 720)
         Controls.Add(Panel1)
@@ -298,6 +311,7 @@ Partial Class LogIn
     Friend WithEvents Label2 As Label
     Friend WithEvents Panel5 As Panel
     Friend WithEvents txtPassword As TextBox
+    Friend WithEvents chkShowPassword As CheckBox
     Friend WithEvents btnLoginTimein As Button
     Friend WithEvents btnServerSettings As Button
     Friend WithEvents Panel6 As Panel

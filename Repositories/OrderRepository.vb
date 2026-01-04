@@ -12,7 +12,7 @@ Public Class OrderRepository
             Next
         End If
 
-        Dim query As String = "INSERT INTO orders (CustomerID, EmployeeID, OrderType, OrderSource, ReceiptNumber, NumberOfDiners, OrderDate, OrderTime, ItemsOrderedCount, TotalAmount, OrderStatus, Remarks, PreparationTimeEstimate) VALUES (@customerID, @employeeID, @orderType, @orderSource, @receiptNumber, @numberOfDiners, @orderDate, @orderTime, @itemsCount, @totalAmount, @orderStatus, @remarks, @prepTime)"
+        Dim query As String = "INSERT INTO orders (CustomerID, EmployeeID, OrderType, OrderSource, ReceiptNumber, NumberOfDiners, OrderDate, OrderTime, ItemsOrderedCount, TotalAmount, OrderStatus, Remarks, PreparationTimeEstimate, CreatedDate, UpdatedDate) VALUES (@customerID, @employeeID, @orderType, @orderSource, @receiptNumber, @numberOfDiners, @orderDate, @orderTime, @itemsCount, @totalAmount, @orderStatus, @remarks, @prepTime, @createdDate, @updatedDate)"
         
         Dim parameters As MySqlParameter() = {
             New MySqlParameter("@customerID", If(order.CustomerID.HasValue, order.CustomerID.Value, DBNull.Value)),
@@ -27,7 +27,9 @@ Public Class OrderRepository
             New MySqlParameter("@totalAmount", order.TotalAmount),
             New MySqlParameter("@orderStatus", If(String.IsNullOrEmpty(order.OrderStatus), "Confirmed", order.OrderStatus)),
             New MySqlParameter("@remarks", If(String.IsNullOrEmpty(order.Remarks), DBNull.Value, order.Remarks)),
-            New MySqlParameter("@prepTime", totalPrepTime)
+            New MySqlParameter("@prepTime", totalPrepTime),
+            New MySqlParameter("@createdDate", DateTime.Now),
+            New MySqlParameter("@updatedDate", DateTime.Now)
         }
 
         ' Use raw connection to handle potential errors gracefully
@@ -67,6 +69,15 @@ Public Class OrderRepository
             End Using
             
             If orderID > 0 Then
+                ' Automatically deduct inventory if created as Completed (common for POS)
+                If order.OrderStatus = "Completed" Then
+                    Try
+                        Dim invService As New InventoryService()
+                        invService.DeductInventoryForOrder(orderID, items)
+                    Catch ex As Exception
+                        System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for new Order #{orderID}: {ex.Message}")
+                    End Try
+                End If
                 Return orderID
             End If
             
@@ -168,19 +179,36 @@ Public Class OrderRepository
     End Function
 
     Public Sub UpdateOrderStatus(orderID As Integer, newStatus As String, Optional silent As Boolean = False)
-        Dim query As String = "UPDATE orders SET OrderStatus = @status WHERE OrderID = @orderID"
+        Dim query As String = "UPDATE orders SET OrderStatus = @status, UpdatedDate = @updatedDate WHERE OrderID = @orderID"
         Dim parameters As MySqlParameter() = {
             New MySqlParameter("@status", newStatus),
-            New MySqlParameter("@orderID", orderID)
+            New MySqlParameter("@orderID", orderID),
+            New MySqlParameter("@updatedDate", DateTime.Now)
         }
-        modDB.ExecuteNonQuery(query, parameters, silent)
+        
+        If modDB.ExecuteNonQuery(query, parameters, silent) > 0 Then
+            ' Automatically deduct inventory if status changed to Completed
+            If newStatus = "Completed" Then
+                Try
+                    ' Get items first
+                    Dim items = GetOrderItems(orderID)
+                    If items.Count > 0 Then
+                        Dim invService As New InventoryService()
+                        invService.DeductInventoryForOrder(orderID, items)
+                    End If
+                Catch ex As Exception
+                    System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for Order #{orderID} on completion: {ex.Message}")
+                End Try
+            End If
+        End If
     End Sub
 
     Public Sub UpdateOrderReceiptNumber(orderID As Integer, receiptNumber As String)
-        Dim query As String = "UPDATE orders SET ReceiptNumber = @receiptNumber WHERE OrderID = @orderID"
+        Dim query As String = "UPDATE orders SET ReceiptNumber = @receiptNumber, UpdatedDate = @updatedDate WHERE OrderID = @orderID"
         Dim parameters As MySqlParameter() = {
             New MySqlParameter("@receiptNumber", receiptNumber),
-            New MySqlParameter("@orderID", orderID)
+            New MySqlParameter("@orderID", orderID),
+            New MySqlParameter("@updatedDate", DateTime.Now)
         }
         modDB.ExecuteNonQuery(query, parameters)
     End Sub
@@ -211,73 +239,126 @@ Public Class OrderRepository
     ''' <summary>
     ''' Gets online orders with pagination using Stored Procedure
     ''' </summary>
-    Public Function GetOnlineOrdersPaged(limit As Integer, offset As Integer, Optional statusFilter As String = "All Orders") As List(Of OnlineOrder)
+    Public Function GetOnlineOrdersPaged(limit As Integer, offset As Integer, Optional statusFilter As String = "All Orders", Optional searchQuery As String = "") As List(Of OnlineOrder)
         Dim onlineOrders As New List(Of OnlineOrder)
-        
-        ' Buffered Loading: Fetch ALL online orders directly
-        Dim whereClause As String = "o.OrderType = 'Online'"
+        Dim whereLines As New List(Of String)
+        Dim paramList As New List(Of MySqlParameter)
+
+        whereLines.Add("o.OrderType = 'Online'")
+
         If statusFilter <> "All Orders" Then
-            whereClause &= " AND o.OrderStatus = '" & statusFilter.Replace("'", "''") & "'"
+            whereLines.Add("o.OrderStatus = @status")
+            paramList.Add(New MySqlParameter("@status", statusFilter))
         End If
-        
+
+        If Not String.IsNullOrEmpty(searchQuery) Then
+            whereLines.Add("(c.FirstName LIKE @search OR c.LastName LIKE @search OR CONCAT(c.FirstName, ' ', c.LastName) LIKE @search)")
+            paramList.Add(New MySqlParameter("@search", "%" & searchQuery & "%"))
+        End If
+
+        Dim whereClause As String = " WHERE " & String.Join(" AND ", whereLines)
+
         Dim query As String = "SELECT o.OrderID, o.CustomerID, o.OrderType, o.OrderSource, o.OrderDate, o.OrderTime, " &
                               "o.ItemsOrderedCount, o.TotalAmount, o.OrderStatus, o.Remarks, o.DeliveryAddress, " &
                               "o.SpecialRequests, o.CreatedDate, o.UpdatedDate, " &
-                              "c.FirstName, c.LastName, c.Email, c.ContactNumber " &
+                              "c.FirstName, c.LastName, c.Email, c.ContactNumber, " &
+                              "IFNULL((SELECT ReceiptNumber FROM sales_receipts WHERE OrderID = o.OrderID LIMIT 1), '') as ReceiptNumber " &
                               "FROM orders o LEFT JOIN customers c ON o.CustomerID = c.CustomerID " &
-                              "WHERE " & whereClause & " " &
-                              "ORDER BY o.OrderDate DESC, o.OrderTime DESC"
-        
-        Dim table As DataTable = modDB.ExecuteQuery(query)
+                              whereClause & " " &
+                              "ORDER BY o.OrderDate DESC, o.OrderTime DESC " &
+                              $"LIMIT {limit} OFFSET {offset}"
+
+        Dim parameters As MySqlParameter() = If(paramList.Count > 0, paramList.ToArray(), Nothing)
+        Dim table As DataTable = modDB.ExecuteQuery(query, parameters)
         
         If table IsNot Nothing Then
             For Each row As DataRow In table.Rows
-                Dim onlineOrder As New OnlineOrder()
-                onlineOrder.OrderID = Convert.ToInt32(row("OrderID"))
-                onlineOrder.CustomerID = If(IsDBNull(row("CustomerID")), 0, Convert.ToInt32(row("CustomerID")))
-                onlineOrder.CustomerName = If(IsDBNull(row("FirstName")), "Unknown", row("FirstName").ToString() & " " & row("LastName").ToString())
-                onlineOrder.Email = If(IsDBNull(row("Email")), "", row("Email").ToString())
-                onlineOrder.ContactNumber = If(IsDBNull(row("ContactNumber")), "", row("ContactNumber").ToString())
-                onlineOrder.OrderType = row("OrderType").ToString()
-                onlineOrder.OrderSource = row("OrderSource").ToString()
-                onlineOrder.OrderDate = Convert.ToDateTime(row("OrderDate"))
-                onlineOrder.OrderTime = CType(row("OrderTime"), TimeSpan)
-                onlineOrder.ItemsOrderedCount = Convert.ToInt32(row("ItemsOrderedCount"))
-                onlineOrder.TotalAmount = Convert.ToDecimal(row("TotalAmount"))
-                onlineOrder.OrderStatus = row("OrderStatus").ToString()
-                onlineOrder.Remarks = If(IsDBNull(row("Remarks")), "", row("Remarks").ToString())
-                onlineOrder.DeliveryAddress = If(IsDBNull(row("DeliveryAddress")), "", row("DeliveryAddress").ToString())
-                onlineOrder.SpecialRequests = If(IsDBNull(row("SpecialRequests")), "", row("SpecialRequests").ToString())
-                onlineOrder.CreatedDate = Convert.ToDateTime(row("CreatedDate"))
-                onlineOrder.UpdatedDate = Convert.ToDateTime(row("UpdatedDate"))
-                
-                onlineOrders.Add(onlineOrder)
+                onlineOrders.Add(MapOnlineOrder(row))
             Next
         End If
         
         Return onlineOrders
     End Function
 
+    Public Function GetOnlineOrderById(orderID As Integer) As OnlineOrder
+        Dim query As String = "SELECT o.OrderID, o.CustomerID, o.OrderType, o.OrderSource, o.OrderDate, o.OrderTime, " &
+                              "o.ItemsOrderedCount, o.TotalAmount, o.OrderStatus, o.Remarks, o.DeliveryAddress, " &
+                              "o.SpecialRequests, o.CreatedDate, o.UpdatedDate, " &
+                              "c.FirstName, c.LastName, c.Email, c.ContactNumber " &
+                              "FROM orders o LEFT JOIN customers c ON o.CustomerID = c.CustomerID " &
+                              "WHERE o.OrderID = @orderID"
+        
+        Dim parameters As MySqlParameter() = {New MySqlParameter("@orderID", orderID)}
+        Dim table As DataTable = modDB.ExecuteQuery(query, parameters)
+        
+        If table IsNot Nothing AndAlso table.Rows.Count > 0 Then
+            Return MapOnlineOrder(table.Rows(0))
+        End If
+        
+        Return Nothing
+    End Function
+
+    Private Function MapOnlineOrder(row As DataRow) As OnlineOrder
+        Dim onlineOrder As New OnlineOrder()
+        onlineOrder.OrderID = Convert.ToInt32(row("OrderID"))
+        onlineOrder.CustomerID = If(IsDBNull(row("CustomerID")), 0, Convert.ToInt32(row("CustomerID")))
+        onlineOrder.CustomerName = If(IsDBNull(row("FirstName")), "Unknown", row("FirstName").ToString() & " " & row("LastName").ToString())
+        onlineOrder.Email = If(IsDBNull(row("Email")), "", row("Email").ToString())
+        onlineOrder.ContactNumber = If(IsDBNull(row("ContactNumber")), "", row("ContactNumber").ToString())
+        onlineOrder.OrderType = If(IsDBNull(row("OrderType")), "", row("OrderType").ToString())
+        onlineOrder.OrderSource = If(IsDBNull(row("OrderSource")), "", row("OrderSource").ToString())
+        onlineOrder.OrderDate = If(IsDBNull(row("OrderDate")), DateTime.MinValue, Convert.ToDateTime(row("OrderDate")))
+        onlineOrder.OrderTime = If(IsDBNull(row("OrderTime")), TimeSpan.Zero, CType(row("OrderTime"), TimeSpan))
+        onlineOrder.ItemsOrderedCount = If(IsDBNull(row("ItemsOrderedCount")), 0, Convert.ToInt32(row("ItemsOrderedCount")))
+        onlineOrder.TotalAmount = If(IsDBNull(row("TotalAmount")), 0D, Convert.ToDecimal(row("TotalAmount")))
+        onlineOrder.OrderStatus = If(IsDBNull(row("OrderStatus")), "Pending", row("OrderStatus").ToString())
+        onlineOrder.Remarks = If(IsDBNull(row("Remarks")), "", row("Remarks").ToString())
+        onlineOrder.DeliveryAddress = If(IsDBNull(row("DeliveryAddress")), "", row("DeliveryAddress").ToString())
+        onlineOrder.SpecialRequests = If(IsDBNull(row("SpecialRequests")), "", row("SpecialRequests").ToString())
+        onlineOrder.ReceiptNumber = If(row.Table.Columns.Contains("ReceiptNumber") AndAlso Not IsDBNull(row("ReceiptNumber")), row("ReceiptNumber").ToString(), "")
+        onlineOrder.CreatedDate = If(IsDBNull(row("CreatedDate")), DateTime.MinValue, Convert.ToDateTime(row("CreatedDate")))
+        onlineOrder.UpdatedDate = If(IsDBNull(row("UpdatedDate")), DateTime.MinValue, Convert.ToDateTime(row("UpdatedDate")))
+        Return onlineOrder
+    End Function
+
     ''' <summary>
     ''' Gets total count of online orders for pagination
     ''' </summary>
-    ''' <summary>
-    ''' Gets total count of online orders using Global Record Counter
-    ''' </summary>
-    Public Function GetTotalOnlineOrdersCount(Optional statusFilter As String = "All Orders") As Integer
-        Dim whereClause As String = "OrderType = 'Online'"
+    Public Function GetTotalOnlineOrdersCount(Optional statusFilter As String = "All Orders", Optional searchQuery As String = "") As Integer
+        Dim whereLines As New List(Of String)
+        Dim paramList As New List(Of MySqlParameter)
+
+        whereLines.Add("o.OrderType = 'Online'")
+
         If statusFilter <> "All Orders" Then
-            whereClause &= " AND OrderStatus = '" & statusFilter.Replace("'", "''") & "'"
+            whereLines.Add("o.OrderStatus = @status")
+            paramList.Add(New MySqlParameter("@status", statusFilter))
         End If
+
+        If Not String.IsNullOrEmpty(searchQuery) Then
+            whereLines.Add("(c.FirstName LIKE @search OR c.LastName LIKE @search OR CONCAT(c.FirstName, ' ', c.LastName) LIKE @search)")
+            paramList.Add(New MySqlParameter("@search", "%" & searchQuery & "%"))
+        End If
+
+        Dim whereClause As String = " WHERE " & String.Join(" AND ", whereLines)
         
         ' Direct COUNT query instead of stored procedure
-        Dim query As String = $"SELECT COUNT(*) AS TotalCount FROM orders WHERE {whereClause}"
+        Dim query As String = $"SELECT COUNT(*) AS TotalCount FROM orders o LEFT JOIN customers c ON o.CustomerID = c.CustomerID {whereClause}"
         
-        Dim result As Object = modDB.ExecuteScalar(query)
+        Dim parameters As MySqlParameter() = If(paramList.Count > 0, paramList.ToArray(), Nothing)
+        Dim result As Object = modDB.ExecuteScalar(query, parameters)
         If result IsNot Nothing AndAlso IsNumeric(result) Then
             Return Convert.ToInt32(result)
         End If
         Return 0
+    End Function
+
+    Public Async Function GetTotalOnlineOrdersCountAsync(Optional statusFilter As String = "All Orders", Optional searchQuery As String = "") As Task(Of Integer)
+        Return Await Task.Run(Function() GetTotalOnlineOrdersCount(statusFilter, searchQuery))
+    End Function
+
+    Public Async Function GetOnlineOrdersPagedAsync(limit As Integer, offset As Integer, Optional statusFilter As String = "All Orders", Optional searchQuery As String = "") As Task(Of List(Of OnlineOrder))
+        Return Await Task.Run(Function() GetOnlineOrdersPaged(limit, offset, statusFilter, searchQuery))
     End Function
 
     Public Function GetTotalActiveOrdersCount() As Integer

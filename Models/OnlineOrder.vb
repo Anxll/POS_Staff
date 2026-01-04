@@ -17,6 +17,7 @@ Public Class OnlineOrder
     Public Property Remarks As String
     Public Property DeliveryAddress As String
     Public Property SpecialRequests As String
+    Public Property ReceiptNumber As String ' NEW: Link to sales_receipts
     Public Property CreatedDate As DateTime
     Public Property UpdatedDate As DateTime
 End Class

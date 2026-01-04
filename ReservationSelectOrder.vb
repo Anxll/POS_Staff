@@ -25,9 +25,6 @@ Public Class ReservationSelectOrder
         ' Enable double buffering for smoother scrolling
         GetType(Control).GetProperty("DoubleBuffered", BindingFlags.NonPublic Or BindingFlags.Instance).SetValue(TableLayoutPanel3, True, Nothing)
         
-        ' Initialize order items list
-        orderItems = New List(Of OrderItem)
-
         ' Refresh cache to ensure inventory status is up to date
         productRepository.RefreshCache()
 
@@ -36,6 +33,10 @@ Public Class ReservationSelectOrder
 
         ' Set default total to 0
         UpdateTotal()
+
+        ' Hide redundant labels in summary panel
+        If Label40 IsNot Nothing Then Label40.Visible = False
+        If Label41 IsNot Nothing Then Label41.Visible = False
     End Sub
 
     ''' <summary>
@@ -77,7 +78,7 @@ Public Class ReservationSelectOrder
             lblSubHeader.Text = "Loading products..."
             TableLayoutPanel3.Visible = False
         Else
-            lblSubHeader.Text = "Create new dine-in or takeout orders"
+            lblSubHeader.Text = "Select items for the reservation"
             TableLayoutPanel3.Visible = True
         End If
         Application.DoEvents()
@@ -375,7 +376,7 @@ Public Class ReservationSelectOrder
 
             ' Logic
             Dim currentItem = item
-            
+
             ' Handle manual text change
             AddHandler txtQty.TextChanged, Sub(sender, e)
                                                Dim newQty As Integer
@@ -410,9 +411,20 @@ Public Class ReservationSelectOrder
     End Sub
 
     Private Sub UpdateTotal()
-        Dim total As Decimal = orderItems.Sum(Function(i) i.UnitPrice * i.Quantity)
+        Dim total As Decimal = 0
+        If orderItems IsNot Nothing Then
+            total = orderItems.Sum(Function(i) i.UnitPrice * i.Quantity)
+        End If
+
+        Dim totalStr As String = $"₱{total:N2}"
+
         If lblTotalValue IsNot Nothing Then
-            lblTotalValue.Text = $"₱{total:F2}"
+            lblTotalValue.Text = totalStr
+        End If
+
+        ' Also update Label41 just in case, though it might be hidden
+        If Label41 IsNot Nothing Then
+            Label41.Text = totalStr
         End If
     End Sub
 
@@ -522,13 +534,34 @@ Public Class ReservationSelectOrder
                 .ProductName = orderItem.ProductName,
                 .Quantity = orderItem.Quantity,
                 .UnitPrice = orderItem.UnitPrice,
-                .TotalPrice = orderItem.Quantity * orderItem.UnitPrice
+                .TotalPrice = orderItem.Quantity * orderItem.UnitPrice,
+                .ProductID = orderItem.ProductID
             }
             reservationItems.Add(resItem)
         Next
         
         Return reservationItems
     End Function
+
+    ''' <summary>
+    ''' Pre-populates the order items list from existing reservation items
+    ''' </summary>
+    Public Sub SetPreSelectedItems(items As List(Of ReservationItem))
+        If items Is Nothing Then Return
+        
+        orderItems.Clear()
+        For Each item In items
+            orderItems.Add(New OrderItem With {
+                .ProductName = item.ProductName,
+                .Quantity = item.Quantity,
+                .UnitPrice = item.UnitPrice,
+                .ProductID = item.ProductID
+            })
+        Next
+        
+        UpdateOrderDisplay()
+        UpdateTotal()
+    End Sub
 
     Private Sub btnCancelOrder_Click(sender As Object, e As EventArgs) Handles btnCancelOrder.Click
         If MessageBox.Show("Are you sure you want to cancel this order?", "Confirm Cancel", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then

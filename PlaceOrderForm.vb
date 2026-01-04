@@ -561,32 +561,37 @@ Public Class PlaceOrderForm
                 .ItemsOrderedCount = itemsCount,
                 .TotalAmount = totalAmount,
                 .EmployeeID = CurrentSession.EmployeeID, ' Set EmployeeID
-                .OrderStatus = "Confirmed" ' POS orders are auto-confirmed
+                .OrderStatus = "Completed"
             }
 
             Dim orderID As Integer = orderRepository.CreateOrder(newOrder, orderItems)
 
 
             If orderID > 0 Then
-                ' IMPORTANT: Refresh Dashboard FIRST to show the order immediately
+                ' 1. IMPORTANT: Refresh Dashboard FIRST to show the order immediately
                 Try
+                    ' Record Payment
+                    Dim receiptRepo As New ReceiptRepository()
+                    receiptRepo.RecordPayment(orderID, Nothing, totalAmount, paymentMethod, "POS", $"POS-{DateTime.Now:yyyyMMdd}-{orderID:D6}")
+                    
                     Dim dashboardForm = Application.OpenForms.OfType(Of DashboardForm)().FirstOrDefault()
                     If dashboardForm IsNot Nothing Then
                         dashboardForm.RefreshActiveOrders()
                     End If
                 Catch ex As Exception
-                    System.Diagnostics.Debug.WriteLine($"Dashboard refresh failed: {ex.Message}")
+                    System.Diagnostics.Debug.WriteLine($"Dashboard refresh / Payment recording failed: {ex.Message}")
                 End Try
 
                 
                 Try
                     ' Generate order number in format VT-YYYY-NNNNNN-mmm (with milliseconds for uniqueness)
-                    Dim orderNumber As String = $"VT-{DateTime.Now:yyyy}-{orderID:D6}-{DateTime.Now:fff}"
+                    Dim orderNumber As String = $"VT-{newOrder.OrderDate:yyyy}-{orderID:D6}-{DateTime.Now:fff}"
 
-                    ' Insert receipt data into database
+                    ' Insert receipt data into database - use the actual order date and time
                     Dim receiptRepo As New ReceiptRepository()
                     Dim receiptID As Integer = receiptRepo.InsertReceiptHeader(
-                        orderID, orderNumber, totalAmount, paymentMethod, amountGiven, changeAmount
+                        orderID, orderNumber, totalAmount, paymentMethod, amountGiven, changeAmount,
+                        newOrder.OrderDate, newOrder.OrderTime
                     )
 
                     ' Insert receipt items with batch information
@@ -598,6 +603,16 @@ Public Class PlaceOrderForm
                     
                     ' Update Receipt Number in Orders table
                     orderRepository.UpdateOrderReceiptNumber(orderID, orderNumber)
+
+                    ' Log Order Activity
+                    ActivityLogger.LogUserActivity(
+                        action:="Order Placed",
+                        actionCategory:="Order",
+                        description:=$"Placed order #{orderNumber} (Total: ₱{totalAmount:F2})",
+                        sourceSystem:="POS",
+                        referenceID:=orderNumber,
+                        referenceTable:="orders"
+                    )
 
                     ' Show success message
                     Dim successMessage As String = $"Order #{orderID} has been placed successfully!" & vbCrLf & vbCrLf &
@@ -653,6 +668,15 @@ Public Class PlaceOrderForm
 
     Private Sub btnCancelOrder_Click(sender As Object, e As EventArgs) Handles btnCancelOrder.Click
         If MessageBox.Show("Are you sure you want to cancel this order?", "Confirm Cancel", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+            Dim itemCount As Integer = orderItems.Sum(Function(i) i.Quantity)
+            Dim totalVal As Decimal = orderItems.Sum(Function(i) i.UnitPrice * i.Quantity)
+
+            ActivityLogger.LogUserActivity(
+                 action:="Order Cancelled",
+                 actionCategory:="Order",
+                 description:=$"Cancelled order in progress ({itemCount} items, Total: ₱{totalVal:F2})",
+                 sourceSystem:="POS"
+            )
             ResetOrder()
         End If
     End Sub

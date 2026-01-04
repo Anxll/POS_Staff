@@ -1,61 +1,130 @@
-﻿Public Class LogIn
-    Private userRepository As New UserRepository()
+﻿Imports MySql.Data.MySqlClient
+
+Public Class LogIn
     Private attendanceRepository As New AttendanceRepository()
 
     Private Sub btnLogin_Click(sender As Object, e As EventArgs) Handles btnLoginTimein.Click
         Dim username As String = txtUsername.Text.Trim()
-        Dim password As String = txtPassword.Text ' Do not trim password (audit fix #1)
+        Dim password As String = txtPassword.Text.Trim()
 
-        If String.IsNullOrEmpty(username) OrElse String.IsNullOrEmpty(password) Then
-            MessageBox.Show("Please enter both username and password.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        ' Validation
+        If String.IsNullOrEmpty(username) Then
+            MessageBox.Show("Please enter your username.", "Missing Field", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            txtUsername.Focus()
+            Return
+        End If
+
+        If String.IsNullOrEmpty(password) Then
+            MessageBox.Show("Please enter your password.", "Missing Field", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            txtPassword.Focus()
             Return
         End If
 
         Try
-            ' Authenticate user using user_accounts table
-            Dim employee As Employee = userRepository.AuthenticateUser(username, password)
+            ' Encrypt typed password
+            Dim encryptedPass As String = Encrypt(password)
 
-            If employee IsNot Nothing Then
-                ' Check if employee already clocked in today
-                Dim todaysAttendance = attendanceRepository.GetTodaysAttendance(employee.EmployeeID)
+            ' Query user_accounts table with JOIN to employee table
+            Dim query As String = "
+                SELECT ua.*, 
+                       COALESCE(e.EmployeeID, 0) as EmployeeID,
+                       COALESCE(e.FirstName, '') as FirstName,
+                       COALESCE(e.LastName, '') as LastName,
+                       COALESCE(e.Email, '') as Email,
+                       COALESCE(e.Position, ua.position) as Position
+                FROM user_accounts ua
+                LEFT JOIN employee e ON ua.employee_id = e.EmployeeID
+                WHERE ua.username = @user 
+                AND ua.password = @pass 
+                LIMIT 1"
 
+            openConn()
+            cmd = New MySqlCommand(query, conn)
+            cmd.Parameters.AddWithValue("@user", username)
+            cmd.Parameters.AddWithValue("@pass", encryptedPass)
+
+            Dim reader = cmd.ExecuteReader()
+
+            If reader.Read() Then
+                ' Store logged user
+                CurrentLoggedUser.id = reader("id")
+                CurrentLoggedUser.name = reader("name").ToString()
+                CurrentLoggedUser.username = reader("username").ToString()
+                CurrentLoggedUser.password = reader("password").ToString()
+                CurrentLoggedUser.type = reader("type")
+                CurrentLoggedUser.employee_id = If(IsDBNull(reader("employee_id")), 0, CInt(reader("employee_id")))
+
+                ' Check status
+                Dim status As String = "Active"
+                Try
+                    If Not IsDBNull(reader("status")) Then
+                        status = reader("status").ToString()
+                    End If
+                Catch
+                End Try
+
+                If status = "Resigned" OrElse status = "InActive" Then
+                    MessageBox.Show("Your account is deactivated or resigned. Access denied.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    reader.Close()
+                    conn.Close()
+                    Return
+                End If
+
+                ' Get employee information
+                Dim employeeID As Integer = If(IsDBNull(reader("EmployeeID")), 0, CInt(reader("EmployeeID")))
+                Dim fullName As String = reader("name").ToString()
+                Dim email As String = If(IsDBNull(reader("Email")), "", reader("Email").ToString())
+                Dim position As String = If(IsDBNull(reader("Position")), "Staff", reader("Position").ToString())
+
+                reader.Close()
+                conn.Close()
+
+                ' Check if employee ID is valid
+                If employeeID = 0 Then
+                    MessageBox.Show("Your account is not linked to an employee record. Please contact administrator.", "Account Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    Return
+                End If
+
+                ' Check if already clocked in today
+                Dim todaysAttendance = attendanceRepository.GetTodaysAttendance(employeeID)
                 Dim attendanceID As Integer
                 Dim timeIn As DateTime
 
                 If todaysAttendance IsNot Nothing Then
-                    ' Already clocked in today
+                    ' Already clocked in
                     attendanceID = todaysAttendance.AttendanceID
                     timeIn = todaysAttendance.TimeIn
 
                     MessageBox.Show(
-                        $"Welcome back, {employee.FullName}!" & vbCrLf & vbCrLf &
-                        $"You already clocked in today at {timeIn:hh:mm tt}",
-                        "Login Successful",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information
-                    )
+                    $"Welcome back, {fullName}!" & vbCrLf & vbCrLf &
+                    $"You already clocked in today at {timeIn:hh:mm tt}",
+                    "Login Successful",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                )
                 Else
                     ' Record time-in
-                    attendanceID = attendanceRepository.RecordTimeIn(employee.EmployeeID)
+                    attendanceID = attendanceRepository.RecordTimeIn(employeeID)
                     timeIn = DateTime.Now
 
                     MessageBox.Show(
-                        $"Welcome, {employee.FullName}!" & vbCrLf & vbCrLf &
-                        $"Time In: {timeIn:hh:mm tt}",
-                        "Login Successful",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information
-                    )
+                    $"Welcome, {fullName}!" & vbCrLf & vbCrLf &
+                    $"Time In: {timeIn:hh:mm tt}",
+                    "Login Successful",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                )
                 End If
 
                 ' Store session information
-                CurrentSession.Initialize(
-                    employee.EmployeeID,
-                    employee.FullName,
-                    employee.Email,
-                    employee.Position,
-                    attendanceID,
-                    timeIn
+                CurrentSession.Initialize(employeeID, fullName, email, position, attendanceID, timeIn)
+
+                ' Log Login Activity
+                ActivityLogger.LogUserActivity(
+                    action:="User Login",
+                    actionCategory:="Login",
+                    description:=$"{fullName} logged into POS",
+                    sourceSystem:="POS"
                 )
 
                 ' Open Dashboard
@@ -65,12 +134,7 @@
             Else
                 MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End If
-        Catch ex As UnauthorizedAccessException
-            ' Handle status-related errors (Resigned, etc.)
-            MessageBox.Show(ex.Message, "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        Catch ex As MySql.Data.MySqlClient.MySqlException
-            ' Handle database connection errors specifically
-            MessageBox.Show($"Database connection error: {ex.Message}", "Connection Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+
         Catch ex As Exception
             ' Generic error - Log it for debugging
             System.Diagnostics.Debug.WriteLine($"Login Error: {ex.ToString()}")
@@ -78,19 +142,15 @@
         End Try
     End Sub
 
+    ' ... rest of your existing code (LogIn_Load, etc.) ...
+
     Private Sub LogIn_FormClosed(sender As Object, e As FormClosedEventArgs) Handles MyBase.FormClosed
         Application.Exit()
     End Sub
 
-    Private Sub Label5_Click(sender As Object, e As EventArgs)
-        MessageBox.Show("Please contact your administrator to create an account.", "Create Account", MessageBoxButtons.OK, MessageBoxIcon.Information)
-    End Sub
-
     Private Sub LogIn_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Center the login panel
         CenterLoginPanel()
 
-        ' Check if config.json exists
         If Not ConfigManager.ConfigExists() Then
             MessageBox.Show(
                 "Database configuration not found." & vbCrLf & vbCrLf &
@@ -103,7 +163,6 @@
             Return
         End If
 
-        ' Test database connection with fallback
         Dim config As DatabaseConfig = ConfigManager.LoadConfig()
         If config Is Nothing OrElse Not config.IsValid() Then
             MessageBox.Show(
@@ -117,13 +176,11 @@
             Return
         End If
 
-        ' Test connection with automatic fallback to backup server
         Dim usedBackup As Boolean = False
         Dim errorMessage As String = ""
         Dim connectionSuccess As Boolean = modDB.TestConnectionWithFallback(config, usedBackup, errorMessage)
 
         If Not connectionSuccess Then
-            ' Database not reachable
             MessageBox.Show(
                 "Database not reachable." & vbCrLf & vbCrLf &
                 "Error Details:" & vbCrLf &
@@ -137,7 +194,6 @@
             Return
         End If
 
-        ' If backup server was used, update the connection string
         If usedBackup Then
             MessageBox.Show(
                 "Primary server unavailable." & vbCrLf & vbCrLf &
@@ -146,8 +202,6 @@
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information
             )
-
-            ' Update config to use backup as primary for this session
             config.ServerIP = config.BackupServerIP
             modDB.ReloadConnectionString()
         End If
@@ -162,25 +216,16 @@
         End Try
     End Sub
 
-    ''' <summary>
-    ''' Opens the server configuration form and closes the login form
-    ''' </summary>
-    ''' <summary>
-    ''' Opens the server configuration form and restarts if configuration changed
-    ''' </summary>
     Private Sub OpenServerConfigForm()
         Dim configForm As New ServerConfig()
         Me.Hide()
 
         If configForm.ShowDialog() = DialogResult.OK Then
-            ' Restart application to reload all settings and connections
             Application.Restart()
         Else
-            ' User cancelled or closed the form without saving
             Application.Exit()
         End If
     End Sub
-
 
     Private Sub LogIn_Resize(sender As Object, e As EventArgs) Handles MyBase.Resize
         CenterLoginPanel()
@@ -188,20 +233,18 @@
 
     Private Sub CenterLoginPanel()
         If Panel2 IsNot Nothing AndAlso Panel3 IsNot Nothing Then
-            ' Center Panel3 within Panel2
             Panel3.Left = (Panel2.Width - Panel3.Width) \ 2
             Panel3.Top = (Panel2.Height - Panel3.Height) \ 2
         End If
     End Sub
 
     Private Sub Panel3_Paint(sender As Object, e As PaintEventArgs) Handles Panel3.Paint
-
     End Sub
 
-    ''' <summary>
-    ''' Server Settings button click handler
-    ''' Opens the server configuration form
-    ''' </summary>
+    Private Sub chkShowPassword_CheckedChanged(sender As Object, e As EventArgs) Handles chkShowPassword.CheckedChanged
+        txtPassword.UseSystemPasswordChar = Not chkShowPassword.Checked
+    End Sub
+
     Private Sub btnServerSettings_Click(sender As Object, e As EventArgs) Handles btnServerSettings.Click
         Dim result As DialogResult = MessageBox.Show(
             "Do you want to reconfigure the database server settings?" & vbCrLf & vbCrLf &
@@ -217,6 +260,5 @@
     End Sub
 
     Private Sub Panel2_Paint(sender As Object, e As PaintEventArgs) Handles Panel2.Paint
-
     End Sub
 End Class
