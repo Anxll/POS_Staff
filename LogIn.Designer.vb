@@ -210,13 +210,13 @@ Partial Class LogIn
         ' 
         ' txtPassword
         ' 
-        EmployeeID.BorderStyle = BorderStyle.None
-        EmployeeID.Font = New Font("Segoe UI", 12.0F)
-        EmployeeID.Location = New Point(15, 11)
-        EmployeeID.Name = "EmployeeID"
-        EmployeeID.Size = New Size(378, 27)
-        EmployeeID.TabIndex = 4
-        EmployeeID.UseSystemPasswordChar = True
+        txtPassword.BorderStyle = BorderStyle.None
+        txtPassword.Font = New Font("Segoe UI", 12.0F)
+        txtPassword.Location = New Point(15, 11)
+        txtPassword.Name = "txtPassword"
+        txtPassword.Size = New Size(378, 27)
+        txtPassword.TabIndex = 4
+        txtPassword.UseSystemPasswordChar = True
         ' 
         ' Panel4
         ' 
@@ -230,12 +230,12 @@ Partial Class LogIn
         ' 
         ' txtUsername
         ' 
-        txtEmail.BorderStyle = BorderStyle.None
-        txtEmail.Font = New Font("Segoe UI", 12.0F)
-        txtEmail.Location = New Point(15, 11)
-        txtEmail.Name = "txtEmail"
-        txtEmail.Size = New Size(378, 27)
-        txtEmail.TabIndex = 4
+        txtUsername.BorderStyle = BorderStyle.None
+        txtUsername.Font = New Font("Segoe UI", 12.0F)
+        txtUsername.Location = New Point(15, 11)
+        txtUsername.Name = "txtUsername"
+        txtUsername.Size = New Size(378, 27)
+        txtUsername.TabIndex = 4
         ' 
         ' lblSubHeader
         ' 
@@ -310,7 +310,8 @@ Partial Class LogIn
     Friend WithEvents Label3 As Label
     Friend WithEvents Label2 As Label
     Friend WithEvents Panel5 As Panel
-    Friend WithEvents EmployeeID As TextBox
+    Friend WithEvents txtPassword As TextBox
+    Friend WithEvents chkShowPassword As CheckBox
     Friend WithEvents btnLoginTimein As Button
     Friend WithEvents btnServerSettings As Button
     Friend WithEvents Panel6 As Panel

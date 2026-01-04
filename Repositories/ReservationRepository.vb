@@ -1,3 +1,4 @@
+
 Imports MySql.Data.MySqlClient
 Imports System.Collections.Generic
 Imports System.Threading.Tasks
@@ -21,12 +22,15 @@ Public Class ReservationRepository
     ''' Gets today's reservations (Buffered - Load All)
     ''' </summary>
     Public Function GetTodayReservations() As List(Of Reservation)
+
         Dim query As String = "SELECT r.ReservationID, r.CustomerID, CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName, " &
                                "c.Email, r.ContactNumber, r.NumberOfGuests, r.EventDate, r.EventTime, r.EventType, " &
                                "r.ReservationStatus " &
                                "FROM reservations r LEFT JOIN customers c ON r.CustomerID = c.CustomerID " &
                                "WHERE DATE(r.EventDate) = CURDATE() AND r.ReservationStatus IN ('Accepted', 'Confirmed') " &
                                "ORDER BY r.EventDate ASC, r.EventTime ASC"
+
+
         Return GetReservations(query)
     End Function
 
@@ -132,26 +136,34 @@ Public Class ReservationRepository
             If newID IsNot Nothing AndAlso IsNumeric(newID) Then
                 Dim reservationID As Integer = CInt(newID)
 
+
+                ' Add reservation items
+                If reservation.Items IsNot Nothing Then
+                    For Each item In reservation.Items
+                        AddReservationItem(reservationID, item)
+                    Next
+                End If
+
+                ' **Deduct inventory ONLY if status is Confirmed or Accepted**
+                If reservation.ReservationStatus = "Confirmed" OrElse reservation.ReservationStatus = "Accepted" Then
+                    Try
+                        DeductInventoryForReservation(reservationID)
+                        System.Diagnostics.Debug.WriteLine($"Successfully deducted inventory for new Reservation #{reservationID}")
+                    Catch ex As Exception
+                        System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for new Reservation #{reservationID}: {ex.Message}")
+                        ' Don't fail the reservation creation, just log the error
+                    End Try
+                End If
+
+
+
                 For Each item In reservation.Items
                     AddReservationItem(reservationID, item)
                 Next
 
-                Next
-            End If
 
-            ' **Deduct inventory ONLY if status is Confirmed or Accepted**
-            If reservation.ReservationStatus = "Confirmed" OrElse reservation.ReservationStatus = "Accepted" Then
-                Try
-                    DeductInventoryForReservation(reservationID)
-                    System.Diagnostics.Debug.WriteLine($"Successfully deducted inventory for new Reservation #{reservationID}")
-                Catch ex As Exception
-                    System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for new Reservation #{reservationID}: {ex.Message}")
-                    ' Don't fail the reservation creation, just log the error
-                End Try
+                Return reservationID
             End If
-
-            Return reservationID
-        End If
         End If
 
         Return 0
@@ -177,6 +189,7 @@ Public Class ReservationRepository
         }
 
         Dim success As Boolean = modDB.ExecuteNonQuery(query, parameters, silent) > 0
+
 
         If success AndAlso (status = "Confirmed" OrElse status = "Accepted") Then
             Try
@@ -271,7 +284,7 @@ Public Class ReservationRepository
             For Each row As DataRow In table.Rows
                 items.Add(New ReservationItem With {
                     .ReservationItemID = Convert.ToInt32(row("ReservationItemID")),
-                    .reservationID = Convert.ToInt32(row("ReservationID")),
+                    .ReservationID = Convert.ToInt32(row("ReservationID")),
                     .ProductName = row("ProductName").ToString(),
                     .Quantity = Convert.ToInt32(row("Quantity")),
                     .UnitPrice = Convert.ToDecimal(row("UnitPrice")),

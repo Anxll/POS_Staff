@@ -41,10 +41,10 @@ Public Class UserRepository
             If table IsNot Nothing AndAlso table.Rows.Count > 0 Then
                 Dim row As DataRow = table.Rows(0)
                 Return New Employee With {
-                    .employeeID = Convert.ToInt32(row("EmployeeID")),
+                    .EmployeeID = Convert.ToInt32(row("EmployeeID")),
                     .FirstName = row("FirstName").ToString(),
                     .LastName = row("LastName").ToString(),
-                    .email = row("Email").ToString(),
+                    .Email = row("Email").ToString(),
                     .Position = If(IsDBNull(row("Position")), "Staff", row("Position").ToString()),
                     .EmploymentStatus = row("EmploymentStatus").ToString()
                 }
