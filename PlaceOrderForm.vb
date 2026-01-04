@@ -568,8 +568,9 @@ Public Class PlaceOrderForm
 
             If orderID > 0 Then
                 ' Deduct inventory for the order
+                Dim inventoryDeducted As Boolean = False
                 Try
-                    inventoryService.DeductInventoryForOrder(orderID, orderItems)
+                    inventoryDeducted = inventoryService.DeductInventoryForOrder(orderID, orderItems)
                 Catch invEx As Exception
                     System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for Order #{orderID}: {invEx.Message}")
                     ' Continue even if inventory deduction fails - order is already created
@@ -595,10 +596,19 @@ Public Class PlaceOrderForm
                     ' Update Receipt Number in Orders table
                     orderRepository.UpdateOrderReceiptNumber(orderID, orderNumber)
 
-                    ' Show success message
+                    ' Show success message with inventory confirmation
+                    Dim successMessage As String = $"Order #{orderID} has been placed successfully!" & vbCrLf & vbCrLf
+                    
+                    If inventoryDeducted Then
+                        successMessage &= "✓ Inventory deducted successfully" & vbCrLf
+                    Else
+                        successMessage &= "⚠ Warning: Inventory deduction may have failed" & vbCrLf
+                    End If
+                    
+                    successMessage &= vbCrLf & $"Receipt saved to: {pdfPath}"
+                    
                     MessageBox.Show(
-                        $"Order #{orderID} has been placed successfully!" & vbCrLf & vbCrLf &
-                        $"Receipt saved to: {pdfPath}",
+                        successMessage,
                         "Success",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information

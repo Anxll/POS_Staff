@@ -11,8 +11,16 @@ Public Class Dashboard
     Private cachedReportsForm As ReportsForm = Nothing
 
     Private Sub Dashboard_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Set active button but DON'T load form yet - prevents initial freeze
         SetActiveButton(btnDashboard)
-        LoadForm(GetOrCreateDashboardForm())
+        lblHeaderTitle.Text = "Dashboard"
+        
+        ' Load dashboard form asynchronously to prevent UI freeze
+        Task.Run(Sub()
+                     Me.Invoke(Sub()
+                                   LoadForm(GetOrCreateDashboardForm())
+                               End Sub)
+                 End Sub)
     End Sub
 
     Private Sub btnDashboard_Click(sender As Object, e As EventArgs) Handles btnDashboard.Click

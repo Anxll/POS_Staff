@@ -532,15 +532,25 @@ Public Class OnlineOrdersForm
             modDB.ExecuteNonQuery(query, parameters)
             
             ' Deduct inventory for the order
+            Dim inventoryDeducted As Boolean = False
             Try
                 Dim items As List(Of OrderItem) = orderRepository.GetOrderItems(order.OrderID)
                 Dim inventoryService As New InventoryService()
-                inventoryService.DeductInventoryForOrder(order.OrderID, items)
+                inventoryDeducted = inventoryService.DeductInventoryForOrder(order.OrderID, items)
             Catch invEx As Exception
                 System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for Order #{order.OrderID}: {invEx.Message}")
             End Try
             
-            MessageBox.Show($"Order #{order.OrderID} has been confirmed and is now being prepared!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            ' Build success message with inventory confirmation
+            Dim successMessage As String = $"Order #{order.OrderID} has been confirmed and is now being prepared!" & vbCrLf & vbCrLf
+            
+            If inventoryDeducted Then
+                successMessage &= "✓ Inventory deducted successfully"
+            Else
+                successMessage &= "⚠ Warning: Inventory deduction may have failed"
+            End If
+            
+            MessageBox.Show(successMessage, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
             
             ' Refresh the list
             currentPage = 1

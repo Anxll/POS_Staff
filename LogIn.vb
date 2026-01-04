@@ -154,7 +154,7 @@
     Private Sub OpenServerConfigForm()
         Dim configForm As New ServerConfig()
         Me.Hide()
-        
+
         If configForm.ShowDialog() = DialogResult.OK Then
             ' Restart application to reload all settings and connections
             Application.Restart()
@@ -197,5 +197,9 @@
         If result = DialogResult.Yes Then
             OpenServerConfigForm()
         End If
+    End Sub
+
+    Private Sub Panel2_Paint(sender As Object, e As PaintEventArgs) Handles Panel2.Paint
+
     End Sub
 End Class

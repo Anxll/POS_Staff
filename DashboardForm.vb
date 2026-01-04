@@ -4,6 +4,7 @@ Public Class DashboardForm
     Private orderRepository As New OrderRepository()
     Private reservationRepository As New ReservationRepository()
     Private WithEvents dashboardTimer As New Timer()
+    Private Shared UpdateLock As New System.Threading.SemaphoreSlim(1, 1)
     
     ' Active Orders Pagination
     Private activeOrdersPage As Integer = 1
@@ -200,10 +201,8 @@ Public Class DashboardForm
     ''' </summary>
     Private Async Function LoadActiveOrdersAsync() As Task
         Try
-            ' Load ALL active orders into buffer (Background)
-            Await Task.Run(Sub()
-                               allActiveOrders = orderRepository.GetActiveOrdersPagedAsync(0, 0).Result
-                           End Sub)
+            ' Load ALL active orders into buffer (Async)
+            allActiveOrders = Await orderRepository.GetActiveOrdersPagedAsync(0, 0)
             
             ' Calculate pagination
             Dim count As Integer = allActiveOrders.Count
@@ -421,10 +420,8 @@ Public Class DashboardForm
 
     Private Async Function LoadTodayReservationsAsync() As Task
         Try
-            ' Load ALL today's reservations into buffer (Background)
-            Await Task.Run(Sub()
-                               allTodayReservations = reservationRepository.GetTodayReservationsPagedAsync(0, 0).Result
-                           End Sub)
+            ' Load ALL today's reservations into buffer (Async)
+            allTodayReservations = Await reservationRepository.GetTodayReservationsPagedAsync(0, 0)
             
             ' Calculate pagination
             Dim count As Integer = allTodayReservations.Count
@@ -633,7 +630,12 @@ Public Class DashboardForm
         End If
     End Sub
 
-    Private Sub dashboardTimer_Tick(sender As Object, e As EventArgs) Handles dashboardTimer.Tick
+    Private Async Sub dashboardTimer_Tick(sender As Object, e As EventArgs) Handles dashboardTimer.Tick
+        ' Prevent overlapping execution of heavy timer logic
+        If UpdateLock.CurrentCount = 0 Then Exit Sub
+
+        Try
+            Await UpdateLock.WaitAsync()
         For Each itemPanel As Control In TableLayoutPanel1.Controls
             If TypeOf itemPanel Is Panel AndAlso itemPanel.Tag IsNot Nothing Then
                 Dim order As Order = TryCast(itemPanel.Tag, Order)
@@ -681,7 +683,8 @@ Public Class DashboardForm
 
                         If order.OrderStatus <> "Serving" Then
                             order.OrderStatus = "Serving"
-                            orderRepository.UpdateOrderStatus(order.OrderID, "Serving")
+                            Dim orderId = order.OrderID
+                            Await Task.Run(Sub() orderRepository.UpdateOrderStatus(orderId, "Serving", True))
                         End If
                     End If
                 Else
@@ -695,7 +698,8 @@ Public Class DashboardForm
 
                         If order.OrderStatus <> "Completed" AndAlso order.OrderStatus <> "Served" Then
                             order.OrderStatus = "Completed"
-                            orderRepository.UpdateOrderStatus(order.OrderID, "Completed")
+                            Dim orderId = order.OrderID
+                            Await Task.Run(Sub() orderRepository.UpdateOrderStatus(orderId, "Completed", True))
                         End If
                     End If
                 End If
@@ -748,11 +752,15 @@ Public Class DashboardForm
                         ' Update database status
                         If reservation.ReservationStatus <> "Completed" Then
                             reservation.ReservationStatus = "Completed"
-                            reservationRepository.UpdateReservationStatus(reservation.ReservationID, "Completed")
+                            Dim resId = reservation.ReservationID
+                            Await Task.Run(Sub() reservationRepository.UpdateReservationStatus(resId, "Completed", True))
                         End If
                     End If
                 End If
             End If
         Next
+    Finally
+        UpdateLock.Release()
+    End Try
     End Sub
 End Class

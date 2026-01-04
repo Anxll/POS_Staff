@@ -27,7 +27,7 @@ Public Class ServerConfig
                 TextBox5.Text = config.Password
             Else
                 ' Set default values for new configuration
-                TextBox2.Text = "localhost"
+                TextBox2.Text = "192.168.137.1"
                 TextBox1.Text = "3306"
                 TextBox3.Text = "tabeya_system"
                 TextBox4.Text = "root"
@@ -244,6 +244,14 @@ Public Class ServerConfig
     End Sub
 
     Private Sub Panel1_Paint(sender As Object, e As PaintEventArgs)
+
+    End Sub
+
+    Private Sub TextBox2_TextChanged(sender As Object, e As EventArgs) Handles TextBox2.TextChanged
+
+    End Sub
+
+    Private Sub ServerConfig_Load_1(sender As Object, e As EventArgs) Handles MyBase.Load
 
     End Sub
 End Class

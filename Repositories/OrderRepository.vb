@@ -160,13 +160,13 @@ Public Class OrderRepository
         Return 0
     End Function
 
-    Public Sub UpdateOrderStatus(orderID As Integer, newStatus As String)
+    Public Sub UpdateOrderStatus(orderID As Integer, newStatus As String, Optional silent As Boolean = False)
         Dim query As String = "UPDATE orders SET OrderStatus = @status WHERE OrderID = @orderID"
         Dim parameters As MySqlParameter() = {
             New MySqlParameter("@status", newStatus),
             New MySqlParameter("@orderID", orderID)
         }
-        modDB.ExecuteNonQuery(query, parameters)
+        modDB.ExecuteNonQuery(query, parameters, silent)
     End Sub
 
     Public Sub UpdateOrderReceiptNumber(orderID As Integer, receiptNumber As String)

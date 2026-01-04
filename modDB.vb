@@ -49,10 +49,19 @@ Public Class modDB
     ''' <param name="config">Database configuration object</param>
     ''' <returns>MySQL connection string</returns>
     Public Shared Function BuildConnectionString(serverIP As String, config As DatabaseConfig) As String
-        Return String.Format(
-            "Server={0};Port={1};Database={2};Uid={3};Pwd={4};CharSet=utf8mb4;Connection Timeout=5;",
-            serverIP, config.Port, config.DatabaseName, config.Username, config.Password
-        )
+        Dim builder As New MySqlConnectionStringBuilder()
+        builder.Server = serverIP
+        builder.Port = Convert.ToUInt32(config.Port)
+        builder.Database = config.DatabaseName
+        builder.UserID = config.Username
+        builder.Password = config.Password
+        builder.CharacterSet = "utf8mb4"
+        builder.ConnectionTimeout = 30
+        builder.SslMode = MySqlSslMode.Preferred
+        builder.AllowPublicKeyRetrieval = True
+        builder.ConvertZeroDateTime = True
+        
+        Return builder.ToString()
     End Function
 
     ''' <summary>
@@ -98,9 +107,16 @@ Public Class modDB
                 Case 1042
                     errorMessage = "Unable to connect to server. Server may be offline or IP address is incorrect."
                 Case 1045
-                    errorMessage = "Access denied. Please check your username and password."
+                    errorMessage = "Access denied. Please check your username and password." & vbCrLf & vbCrLf & 
+                                  "Note: If connecting remotely, you must use the credentials for the remote user (e.g., 'root'@'%'), which may differ from the local user ('root'@'localhost')."
                 Case 1049
                     errorMessage = $"Unknown database '{config.DatabaseName}'. Please verify the database name."
+                Case 1130
+                    errorMessage = $"Host access denied. The MariaDB server is rejecting connections from this computer." & vbCrLf & vbCrLf &
+                                  "To fix this, run the following SQL command on the MariaDB server:" & vbCrLf &
+                                  $"GRANT ALL PRIVILEGES ON {config.DatabaseName}.* TO '{config.Username}'@'%' IDENTIFIED BY 'your_password';" & vbCrLf &
+                                  "FLUSH PRIVILEGES;" & vbCrLf & vbCrLf &
+                                  "Replace 'your_password' with your actual password."
                 Case Else
                     errorMessage = $"MySQL Error ({ex.Number}): {ex.Message}"
             End Select
@@ -212,7 +228,7 @@ Public Class modDB
     ''' <param name="query">SQL INSERT/UPDATE/DELETE query string</param>
     ''' <param name="parameters">Optional parameter array for parameterized queries</param>
     ''' <returns>Number of rows affected, or -1 if error occurs</returns>
-    Public Shared Function ExecuteNonQuery(query As String, Optional parameters As MySqlParameter() = Nothing) As Integer
+    Public Shared Function ExecuteNonQuery(query As String, Optional parameters As MySqlParameter() = Nothing, Optional silent As Boolean = False) As Integer
         Try
             Using connection As New MySqlConnection(ConnectionString)
                 connection.Open()
@@ -228,10 +244,16 @@ Public Class modDB
                 End Using
             End Using
         Catch ex As MySqlException
-            MessageBox.Show($"Database operation error: {ex.Message}", "Operation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            If Not silent Then
+                MessageBox.Show($"Database operation error: {ex.Message}", "Operation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            End If
+            System.Diagnostics.Debug.WriteLine($"Database operation error (Silent={silent}): {ex.Message}")
             Return -1
         Catch ex As Exception
-            MessageBox.Show($"Unexpected error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            If Not silent Then
+                MessageBox.Show($"Unexpected error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            End If
+            System.Diagnostics.Debug.WriteLine($"Unexpected error (Silent={silent}): {ex.Message}")
             Return -1
         End Try
     End Function

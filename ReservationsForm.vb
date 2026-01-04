@@ -100,28 +100,26 @@ Public Class ReservationsForm
         Panel1.Height -= pnlPagination.Height
     End Sub
 
-    ' Buffer for client-side pagination
-    Private allReservations As New List(Of Reservation)()
+    ' Database-level pagination - NO client-side buffer
     
     Private Async Function LoadReservationsAsync() As Task
         If isLoading Then Return
         isLoading = True
         
         Try
-            ' Load all into buffer (Background)
+            ' Get total count first (fast query)
             Await Task.Run(Sub()
-                               allReservations = reservationRepository.GetAllReservationsPaged(0, 0)
+                               totalRecords = reservationRepository.GetTotalReservationsCount()
                            End Sub)
             
             ' Calculate pagination
-            totalRecords = allReservations.Count
             totalPages = Math.Max(1, CInt(Math.Ceiling(totalRecords / pageSize)))
             
             If currentPage > totalPages Then currentPage = totalPages
             If currentPage < 1 Then currentPage = 1
             
-            ' Display first page
-            DisplayCurrentPage()
+            ' Load only current page from database
+            Await LoadCurrentPageFromDatabase()
             
             ' Show pagination controls
             If pnlPagination IsNot Nothing Then pnlPagination.Visible = True
@@ -132,12 +130,22 @@ Public Class ReservationsForm
             isLoading = False
         End Try
     End Function
-
-    Private Sub DisplayCurrentPage()
-        ' Slice the buffer
-        Dim pageData = allReservations.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList()
+    
+    Private Async Function LoadCurrentPageFromDatabase() As Task
+        Dim offset As Integer = (currentPage - 1) * pageSize
+        Dim pageData As List(Of Reservation) = Nothing
+        
+        Await Task.Run(Sub()
+                           pageData = reservationRepository.GetAllReservationsPaged(pageSize, offset)
+                       End Sub)
+        
         DisplayReservations(pageData)
         UpdatePaginationControls()
+    End Function
+
+    Private Async Sub DisplayCurrentPage()
+        ' Load current page from database
+        Await LoadCurrentPageFromDatabase()
     End Sub
 
     Private Sub UpdatePaginationControls()

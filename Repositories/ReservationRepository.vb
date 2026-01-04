@@ -4,13 +4,15 @@ Imports System.Threading.Tasks
 
 Public Class ReservationRepository
     ''' <summary>
-    ''' Gets all reservations (Buffered - Load All)
+    ''' Gets all reservations with pagination (Database-level LIMIT/OFFSET)
     ''' </summary>
-    Public Function GetAllReservations() As List(Of Reservation)
+    Public Function GetAllReservations(Optional limit As Integer = 100, Optional offset As Integer = 0) As List(Of Reservation)
+        ' Use database-level pagination to avoid loading all 10,001+ records
         Dim query As String = "SELECT r.ReservationID, r.CustomerID, r.FullName, CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName, c.Email, r.ContactNumber, r.AssignedStaffID, r.NumberOfGuests, r.EventDate, r.EventTime, r.EventType, r.ReservationStatus, r.ProductSelection, r.SpecialRequests, r.DeliveryAddress, r.DeliveryOption, COALESCE((SELECT SUM(TotalPrice) FROM reservation_items WHERE ReservationID = r.ReservationID), 0) AS TotalPrice " &
                               "FROM reservations r " &
                               "LEFT JOIN customers c ON r.CustomerID = c.CustomerID " &
-                              "ORDER BY r.ReservationID DESC"
+                              "ORDER BY r.ReservationID DESC " &
+                              $"LIMIT {limit} OFFSET {offset}"
 
         Return GetReservations(query)
     End Function
@@ -28,13 +30,14 @@ Public Class ReservationRepository
         Return GetReservations(query)
     End Function
 
-    ' Legacy support for paginated calls - Redirects to buffered list
+    ' Paginated calls - Now use proper database-level pagination
     Public Function GetTodayReservationsPaged(limit As Integer, offset As Integer) As List(Of Reservation)
         Return GetTodayReservations()
     End Function
 
     Public Function GetAllReservationsPaged(limit As Integer, offset As Integer) As List(Of Reservation)
-        Return GetAllReservations()
+        ' Use database-level pagination instead of loading all records
+        Return GetAllReservations(limit, offset)
     End Function
 
     Public Async Function GetAllReservationsAsync() As Task(Of List(Of Reservation))
@@ -166,34 +169,22 @@ Public Class ReservationRepository
         modDB.ExecuteNonQuery(query, parameters)
     End Sub
 
-    ''' <summary>
-    ''' Updates reservation status and deducts inventory if changing TO Confirmed/Accepted
-    ''' </summary>
     Public Function UpdateReservationStatus(reservationID As Integer, status As String) As Boolean
-        ' Get current status before updating
-        Dim currentStatus As String = GetReservationStatus(reservationID)
-
-        ' Update the status
-        Dim query As String = "UPDATE reservations SET ReservationStatus = @status, UpdatedDate = NOW() WHERE ReservationID = @reservationID"
+        Dim query As String = "UPDATE reservations SET ReservationStatus = @status WHERE ReservationID = @reservationID"
         Dim parameters As MySqlParameter() = {
             New MySqlParameter("@status", status),
             New MySqlParameter("@reservationID", reservationID)
         }
 
-        Dim success As Boolean = modDB.ExecuteNonQuery(query, parameters) > 0
+        Dim success As Boolean = modDB.ExecuteNonQuery(query, parameters, silent) > 0
 
-        ' **Deduct inventory ONLY if status changed FROM Pending TO Confirmed/Accepted**
-        If success AndAlso currentStatus <> "Confirmed" AndAlso currentStatus <> "Accepted" Then
-            If status = "Confirmed" OrElse status = "Accepted" Then
-                Try
-                    DeductInventoryForReservation(reservationID)
-                    System.Diagnostics.Debug.WriteLine($"Successfully deducted inventory for Reservation #{reservationID} (status changed to {status})")
-                Catch ex As Exception
-                    System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for Reservation #{reservationID}: {ex.Message}")
-                    ' Don't fail the status update, just log the error
-                    Throw New Exception($"Status updated but inventory deduction failed: {ex.Message}", ex)
-                End Try
-            End If
+        If success AndAlso (status = "Confirmed" OrElse status = "Accepted") Then
+            Try
+                Dim inventoryService As New InventoryService()
+                inventoryService.DeductInventoryForReservation(reservationID)
+            Catch ex As Exception
+                System.Diagnostics.Debug.WriteLine($"Inventory deduction failed for reservation #{reservationID}: {ex.Message}")
+            End Try
         End If
 
         Return success
@@ -256,6 +247,18 @@ Public Class ReservationRepository
         Return 0
     End Function
 
+    ''' <summary>
+    ''' Gets total count of all reservations for pagination
+    ''' </summary>
+    Public Function GetTotalReservationsCount() As Integer
+        Dim query As String = "SELECT COUNT(*) FROM reservations"
+        Dim result As Object = modDB.ExecuteScalar(query)
+        If result IsNot Nothing AndAlso IsNumeric(result) Then
+            Return CInt(result)
+        End If
+        Return 0
+    End Function
+
     Public Function GetReservationItems(reservationID As Integer) As List(Of ReservationItem)
         Dim items As New List(Of ReservationItem)
         Dim query As String = "SELECT ReservationItemID, ReservationID, ProductName, Quantity, UnitPrice, TotalPrice FROM reservation_items WHERE ReservationID = @reservationID"
@@ -268,7 +271,7 @@ Public Class ReservationRepository
             For Each row As DataRow In table.Rows
                 items.Add(New ReservationItem With {
                     .ReservationItemID = Convert.ToInt32(row("ReservationItemID")),
-                    .ReservationID = Convert.ToInt32(row("ReservationID")),
+                    .reservationID = Convert.ToInt32(row("ReservationID")),
                     .ProductName = row("ProductName").ToString(),
                     .Quantity = Convert.ToInt32(row("Quantity")),
                     .UnitPrice = Convert.ToDecimal(row("UnitPrice")),
